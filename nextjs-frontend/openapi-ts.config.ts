@@ -3,7 +3,7 @@ import { config } from "dotenv";
 
 config({ path: ".env.local" });
 
-const openapiFile = process.env.OPENAPI_OUTPUT_FILE;
+const openapiFile = process.env.OPENAPI_OUTPUT_FILE ?? "./openapi.json";
 
 export default defineConfig({
   input: openapiFile as string,
@@ -11,5 +11,10 @@ export default defineConfig({
     path: "app/openapi-client",
     postProcess: ["prettier"],
   },
-  plugins: ["@hey-api/client-fetch"],
+  plugins: [
+    {
+      name: "@hey-api/client-fetch",
+      baseUrl: false,
+    },
+  ],
 });
