@@ -8,9 +8,8 @@ const openapiFile = process.env.OPENAPI_OUTPUT_FILE;
 export default defineConfig({
   input: openapiFile as string,
   output: {
-    format: "prettier",
-    lint: "eslint",
     path: "app/openapi-client",
+    postProcess: ["prettier"],
   },
-  plugins: ["@hey-api/client-axios"],
+  plugins: ["@hey-api/client-fetch"],
 });

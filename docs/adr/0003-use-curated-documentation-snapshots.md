@@ -1,0 +1,3 @@
+# Use Curated Documentation Snapshots for the First Review Corpus
+
+The Documentation Review agent will search curated local markdown snapshots instead of fetching live pages during each request. OpenAI Agents SDK docs are Target Documentation Sources, while OpenAI API docs for Responses, Structured Outputs, and Agents SDK implementation patterns are Reference Documentation Sources; this makes the demo reliable, keeps tests deterministic, and lets the implementation focus on evidence-backed Edit Suggestions. Production would add a crawler or indexing job with freshness checks before expanding beyond the curated corpus.

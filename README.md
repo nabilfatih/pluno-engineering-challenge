@@ -1,70 +1,220 @@
-## Next.js FastAPI Template
+# Pluno Documentation Review Challenge
 
-<a href="https://www.vintasoftware.com/blog/next-js-fastapi-template"><img src="docs/images/banner.png" alt="Next.js FastAPI Template" width="auto"></a>
-<p align="center">
-    <em>Next.js FastAPI Template: Python + Modern TypeScript stack with Zod validation.</em>
-</p>
-<p align="center">
-<a href="https://github.com/vintasoftware/nextjs-fastapi-template/actions/workflows/ci.yml" target="_blank">
-    <img src="https://github.com/vintasoftware/nextjs-fastapi-template/actions/workflows/ci.yml/badge.svg" alt="CI">
-</a>
-<a href="https://coveralls.io/github/vintasoftware/nextjs-fastapi-template" target="_blank">
-    <img src="https://coveralls.io/repos/github/vintasoftware/nextjs-fastapi-template/badge.svg" alt="Coverage">
-</a>
-</p>
+This repository implements the Pluno AI/backend take-home challenge on top of
+`vintasoftware/nextjs-fastapi-template`.
 
----
+The product turns a natural-language documentation update request into
+grounded, reviewable edit suggestions for OpenAI Agents SDK documentation. A
+user can generate suggestions, inspect source evidence, edit the replacement
+text, approve or reject each suggestion, and save the reviewed update.
 
-**Documentation**: <a href="https://vintasoftware.github.io/nextjs-fastapi-template/" target="_blank">https://vintasoftware.github.io/nextjs-fastapi-template/</a>
+## Problem Solved
 
-**Source Code**: <a href="https://github.com/vintasoftware/nextjs-fastapi-template/" target="_blank">https://github.com/vintasoftware/nextjs-fastapi-template/</a>
+Documentation drifts when APIs and product behavior change. The app helps a
+maintainer answer:
 
----
+- Which documentation page likely needs to change?
+- What exact excerpt should be replaced?
+- Why is this suggestion grounded in the docs?
+- What final reviewed update should be saved for later application?
 
-The Next.js FastAPI Template provides a solid foundation for scalable, high-performance web applications, following clean architecture and best practices. It simplifies development by integrating FastAPI, Pydantic, and Next.js with TypeScript and Zod, ensuring end-to-end type safety and schema validation between frontend and backend.
+The saved result is not just an AI note. It stores before-and-after excerpts,
+evidence, reviewer decisions, and final replacement text.
 
-The FastAPI backend supports fully asynchronous operations, optimizing database queries, API routes, and test execution for better performance. Deployment is seamless, with both backend and frontend fully deployable to Vercel, enabling quick product releases with minimal configuration.
+## Architecture
 
-### Key features
-✔ End-to-end type safety – Automatically generated typed clients from the OpenAPI schema ensure seamless API contracts between frontend and backend.
+```mermaid
+flowchart LR
+  User["Reviewer"]
+  UI["Next.js review workspace<br/>shadcn/ui + TanStack Query/Form"]
+  API["FastAPI documentation review routes"]
+  Module["DocumentationReviewModule"]
+  Retrieval["Curated corpus retrieval<br/>ranked full-text chunks"]
+  Agent["OpenAI Agents SDK reviewer<br/>Agent + Runner + function_tool"]
+  Grounding["Deterministic grounding check"]
+  DB["Postgres saved_updates"]
 
-✔ Hot-reload updates – The client updates automatically when backend routes change, keeping FastAPI and Next.js in sync.
+  User --> UI
+  UI -->|"generated OpenAPI client"| API
+  API --> Module
+  Module --> Retrieval
+  Module --> Agent
+  Agent -->|"structured output"| Grounding
+  Grounding -->|"grounded suggestions or no-suggestions result"| UI
+  UI -->|"review decisions"| API
+  API --> DB
+```
 
-✔ Versatile foundation – Designed for MVPs and production-ready applications, with a pre-configured authentication system and API layer.
+Backend ownership is intentionally deep:
 
-✔ Quick deployment – Deploys a full-stack application—including authentication flow and a dashboard—on Vercel in just a few steps.
+- `fastapi_backend/app/documentation_review/corpus/` contains committed Agents
+  SDK documentation snapshots for deterministic demos and tests.
+- `retrieval.py` ranks local markdown chunks before the model call.
+- `reviewer_agent.py` uses the Python OpenAI Agents SDK with a documentation
+  search tool and structured output.
+- `validation.py` rejects ungrounded suggestions before the frontend sees them.
+- `repository.py` persists reviewed updates in Postgres.
 
-✔ Production-ready authentication – Includes a pre-configured authentication system and dashboard interface, allowing you to immediately start development with user management features.
+Frontend ownership stays focused:
 
-## Technology stack
-This template features a carefully selected set of technologies to ensure efficiency, scalability, and ease of use:
+- `/` is the review workspace.
+- TanStack Query owns server state and mutations.
+- TanStack Form owns request/save form state.
+- shadcn/ui primitives provide the design system.
+- The generated OpenAPI client keeps the frontend/backend contract typed.
 
-- Zod + TypeScript – Type safety and schema validation across the stack.
-- fastapi-users – Complete authentication system with:
-    - Secure password hashing
-    - JWT authentication
-- Email-based password recovery
-- shadcn/ui – Prebuilt React components with Tailwind CSS.
-- OpenAPI-fetch – Fully typed client generation from the OpenAPI schema.
-- UV – Simplified dependency management and packaging.
-- Docker Compose – Consistent environments for development and production.
-- Pre-commit hooks – Automated code linting, formatting, and validation before commits.
-- Vercel Deployment – Serverless backend and scalable frontend, deployable with minimal configuration.
+## AI Pipeline
 
-This is a partial list of the technologies included in the template. For a complete overview, visit our [Technology selection](https://vintasoftware.github.io/nextjs-fastapi-template/technology-selection/) page.
+1. Load committed target documentation snapshots.
+2. Retrieve the most relevant chunks with ranked in-process full-text search.
+3. Run one focused OpenAI Agents SDK reviewer agent.
+4. Allow the agent to call `search_documentation` for extra corpus lookup.
+5. Require structured `EditSuggestion` output.
+6. Run backend grounding checks:
+   - source path must exist
+   - original excerpt must match the target source
+   - suggestion count is capped
+   - ungrounded output becomes a no-suggestions result
+7. Return suggestions for human review.
 
-## Get Started
+I chose one reviewer agent instead of multi-agent orchestration because the
+challenge asks for reasonable suggestions for straightforward requests. The
+current hard problem is grounding and reviewability, not delegation. Production
+could add specialist verifier/export agents after deterministic checks and
+evals exist.
 
-To use this template, visit our [Get Started](https://vintasoftware.github.io/nextjs-fastapi-template/get-started/) and follow the steps.
+## Setup
 
-## Using the template? Let's talk!
+Start the databases:
 
-We’re always curious to see how the community builds on top of it and where it’s being used. To collaborate:
+```bash
+docker compose up -d db db_test mailhog
+```
 
-- Join the conversation on [GitHub Discussions](https://github.com/vintasoftware/nextjs-fastapi-template/discussions)
-- Report bugs or suggest improvements via [issues](https://github.com/vintasoftware/nextjs-fastapi-template/issues)
-- Check the [Contributing](https://vintasoftware.github.io/nextjs-fastapi-template/contributing/) guide to get involved
+Install backend dependencies and migrate:
 
-This project is maintained by [Vinta Software](https://www.vinta.com.br/) and is actively used in production systems we build for clients. Talk to our expert consultants — get a free technical review: contact@vinta.com.br.
+```bash
+cd fastapi_backend
+uv sync
+uv run alembic upgrade head
+```
 
-*Disclaimer: This project is not affiliated with Vercel.*
+Configure backend environment:
+
+```bash
+cp .env.example .env
+```
+
+Set `OPENAI_API_KEY` in `fastapi_backend/.env`. The key is intentionally not
+committed. `OPENAI_MODEL` defaults to `gpt-5.5` and can be changed in env.
+
+Install frontend dependencies:
+
+```bash
+cd nextjs-frontend
+pnpm install
+```
+
+Configure frontend environment:
+
+```bash
+cp .env.example .env
+```
+
+`NEXT_PUBLIC_API_BASE_URL` should point at the backend, usually
+`http://localhost:8000`.
+
+## Run Locally
+
+Backend:
+
+```bash
+cd fastapi_backend
+PYTHONPATH=. uv run fastapi dev app/main.py --host 0.0.0.0 --port 8000
+```
+
+Frontend:
+
+```bash
+cd nextjs-frontend
+pnpm run dev
+```
+
+Open `http://localhost:3000`.
+
+## API Surface
+
+- `POST /documentation-reviews/suggestions`
+- `POST /documentation-reviews/saved-updates`
+- `GET /documentation-reviews/saved-updates`
+
+The OpenAPI schema is generated from FastAPI and consumed by the Next.js client.
+
+## Verification
+
+Backend:
+
+```bash
+cd fastapi_backend
+uv run ruff format app tests alembic_migrations
+uv run ruff check app tests alembic_migrations
+uv run mypy
+uv run pytest -q
+```
+
+Frontend:
+
+```bash
+cd nextjs-frontend
+pnpm audit --prod
+pnpm run tsc
+pnpm run lint
+pnpm exec jest --runInBand
+pnpm run build
+```
+
+The current suite includes backend retrieval, grounding, and route workflow
+tests plus a frontend review-state payload test.
+
+## Speed Tradeoffs
+
+Implemented for the take-home:
+
+- committed curated corpus instead of live crawling on every request
+- ranked full-text retrieval instead of a vector database
+- synchronous suggestion generation
+- one focused reviewer agent
+- JSON persistence for reviewed suggestions
+- unauthenticated challenge workspace
+
+Why these tradeoffs:
+
+- They keep the demo deterministic and easy to review.
+- They put effort into the AI quality path: retrieval, structured output,
+  grounding, and reviewability.
+- They avoid infrastructure that would not improve the take-home result within
+  the available time.
+
+## Production Changes
+
+For production I would add:
+
+- authentication and workspace/team authorization
+- encrypted secret management and key rotation
+- hybrid retrieval: Postgres full-text plus embeddings/vector search
+- async jobs and progress updates for long documentation reviews
+- corpus refresh jobs with freshness checks and source versioning
+- automated evals for retrieval recall, grounding precision, and suggestion
+  usefulness
+- tracing for retrieval chunks, tool calls, model output, and validation drops
+- rate limits, abuse protection, and per-workspace quotas
+- normalized suggestion tables if analytics, assignment, or audit workflows grow
+- export/apply flows that open documentation PRs after human approval
+- optional verifier/export agents once deterministic checks are already strong
+
+## Template Attribution
+
+This project is based on
+[vintasoftware/nextjs-fastapi-template](https://github.com/vintasoftware/nextjs-fastapi-template).
+The original template auth/dashboard code remains, but the challenge workflow
+opens directly at `/`.

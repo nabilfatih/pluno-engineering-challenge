@@ -1,3 +1,5 @@
+from collections.abc import Sequence
+from typing import cast
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -6,15 +8,15 @@ from fastapi_pagination.ext.sqlalchemy import apaginate
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from app.database import User, get_async_session
-from app.models import Item
+from app.database import get_async_session
+from app.models import Item, User
 from app.schemas import ItemRead, ItemCreate
 from app.users import current_active_user
 
 router = APIRouter(tags=["item"])
 
 
-def transform_items(items):
+def transform_items(items: Sequence[Item]) -> list[ItemRead]:
     return [ItemRead.model_validate(item) for item in items]
 
 
@@ -24,10 +26,11 @@ async def read_item(
     user: User = Depends(current_active_user),
     page: int = Query(1, ge=1, description="Page number"),
     size: int = Query(10, ge=1, le=100, description="Page size"),
-):
+) -> Page[ItemRead]:
     params = Params(page=page, size=size)
     query = select(Item).filter(Item.user_id == user.id)
-    return await apaginate(db, query, params, transformer=transform_items)
+    page_result = await apaginate(db, query, params, transformer=transform_items)
+    return cast(Page[ItemRead], page_result)
 
 
 @router.post("/", response_model=ItemRead)
@@ -35,7 +38,7 @@ async def create_item(
     item: ItemCreate,
     db: AsyncSession = Depends(get_async_session),
     user: User = Depends(current_active_user),
-):
+) -> Item:
     db_item = Item(**item.model_dump(), user_id=user.id)
     db.add(db_item)
     await db.commit()
@@ -48,7 +51,7 @@ async def delete_item(
     item_id: UUID,
     db: AsyncSession = Depends(get_async_session),
     user: User = Depends(current_active_user),
-):
+) -> dict[str, str]:
     result = await db.execute(
         select(Item).filter(Item.id == item_id, Item.user_id == user.id)
     )

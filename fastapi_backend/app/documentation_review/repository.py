@@ -1,0 +1,79 @@
+from datetime import datetime
+from typing import cast
+from uuid import UUID
+
+from sqlalchemy import desc, select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.models import SavedUpdate
+
+from .schemas import (
+    ReviewDecision,
+    ReviewedSuggestion,
+    SaveReviewedUpdateRequest,
+    SavedUpdateRead,
+    SavedUpdateSummary,
+)
+
+
+async def save_reviewed_update(
+    db: AsyncSession,
+    payload: SaveReviewedUpdateRequest,
+) -> SavedUpdateRead:
+    """Persist one reviewed documentation update and return its saved shape."""
+
+    approved_count = sum(
+        1
+        for item in payload.reviewed_suggestions
+        if item.decision == ReviewDecision.APPROVED
+    )
+    rejected_count = sum(
+        1
+        for item in payload.reviewed_suggestions
+        if item.decision == ReviewDecision.REJECTED
+    )
+
+    saved = SavedUpdate(
+        title=payload.title,
+        summary=payload.summary,
+        request_text=payload.request,
+        reviewed_suggestions=[
+            item.model_dump(mode="json") for item in payload.reviewed_suggestions
+        ],
+        approved_count=approved_count,
+        rejected_count=rejected_count,
+    )
+
+    db.add(saved)
+    await db.commit()
+    await db.refresh(saved)
+    return saved_update_read(saved)
+
+
+async def list_saved_updates(db: AsyncSession) -> list[SavedUpdateSummary]:
+    """List Saved Updates from newest to oldest."""
+
+    result = await db.execute(
+        select(SavedUpdate).order_by(desc(SavedUpdate.created_at))
+    )
+    return [SavedUpdateSummary.model_validate(row) for row in result.scalars()]
+
+
+def saved_update_read(saved: SavedUpdate) -> SavedUpdateRead:
+    """Convert a persisted Saved Update into its response contract."""
+
+    reviewed_suggestions = [
+        ReviewedSuggestion.model_validate(item)
+        for item in cast(list[object], saved.reviewed_suggestions)
+    ]
+
+    return SavedUpdateRead(
+        id=cast(UUID, saved.id),
+        title=cast(str, saved.title),
+        summary=cast(str, saved.summary),
+        request=cast(str, saved.request_text),
+        reviewed_suggestions=reviewed_suggestions,
+        approved_count=cast(int, saved.approved_count),
+        rejected_count=cast(int, saved.rejected_count),
+        created_at=cast(datetime, saved.created_at),
+    )

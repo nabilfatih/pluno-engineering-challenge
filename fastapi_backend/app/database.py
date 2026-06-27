@@ -1,5 +1,6 @@
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
 from urllib.parse import urlparse
+from uuid import UUID
 
 from fastapi import Depends
 from fastapi_users.db import SQLAlchemyUserDatabase
@@ -26,7 +27,7 @@ async_session_maker = async_sessionmaker(
 )
 
 
-async def create_db_and_tables():
+async def create_db_and_tables() -> None:
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
@@ -36,5 +37,7 @@ async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
         yield session
 
 
-async def get_user_db(session: AsyncSession = Depends(get_async_session)):
+async def get_user_db(
+    session: AsyncSession = Depends(get_async_session),
+) -> AsyncGenerator[SQLAlchemyUserDatabase[User, UUID], None]:
     yield SQLAlchemyUserDatabase(session, User)

@@ -829,6 +829,114 @@
           }
         }
       }
+    },
+    "/documentation-reviews/suggestions": {
+      "post": {
+        "tags": [
+          "documentation-review"
+        ],
+        "summary": "Propose Documentation Suggestions",
+        "description": "Generate grounded Edit Suggestions for a documentation update request.",
+        "operationId": "propose_documentation_suggestions",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DocumentationReviewRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentationReviewResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/documentation-reviews/saved-updates": {
+      "get": {
+        "tags": [
+          "documentation-review"
+        ],
+        "summary": "List Documentation Updates",
+        "description": "List previously saved documentation updates.",
+        "operationId": "list_documentation_updates",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SavedUpdateSummary"
+                  },
+                  "type": "array",
+                  "title": "Response Documentation-Review-List Documentation Updates"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "documentation-review"
+        ],
+        "summary": "Save Documentation Update",
+        "description": "Persist the user's reviewed documentation update.",
+        "operationId": "save_documentation_update",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveReviewedUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavedUpdateRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -909,6 +1017,125 @@
           "token"
         ],
         "title": "Body_auth-verify:verify"
+      },
+      "DocumentationReviewRequest": {
+        "properties": {
+          "request": {
+            "type": "string",
+            "maxLength": 4000,
+            "minLength": 8,
+            "title": "Request"
+          }
+        },
+        "type": "object",
+        "required": [
+          "request"
+        ],
+        "title": "DocumentationReviewRequest",
+        "description": "Request body for generating documentation Edit Suggestions."
+      },
+      "DocumentationReviewResponse": {
+        "properties": {
+          "suggestions": {
+            "items": {
+              "$ref": "#/components/schemas/EditSuggestion"
+            },
+            "type": "array",
+            "maxItems": 3,
+            "title": "Suggestions"
+          },
+          "no_suggestions": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NoSuggestionsResult"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "request": {
+            "type": "string",
+            "title": "Request"
+          }
+        },
+        "type": "object",
+        "required": [
+          "request"
+        ],
+        "title": "DocumentationReviewResponse",
+        "description": "Grounded documentation review returned to the web app."
+      },
+      "EditSuggestion": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Id"
+          },
+          "source_path": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Source Path"
+          },
+          "source_title": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Source Title"
+          },
+          "original_excerpt": {
+            "type": "string",
+            "maxLength": 3000,
+            "minLength": 1,
+            "title": "Original Excerpt"
+          },
+          "suggested_excerpt": {
+            "type": "string",
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Suggested Excerpt"
+          },
+          "rationale": {
+            "type": "string",
+            "maxLength": 1200,
+            "minLength": 1,
+            "title": "Rationale"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/SuggestionEvidence"
+            },
+            "type": "array",
+            "maxItems": 4,
+            "title": "Evidence"
+          },
+          "confidence": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Confidence"
+          },
+          "review_narrative": {
+            "type": "string",
+            "maxLength": 1400,
+            "minLength": 1,
+            "title": "Review Narrative"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "source_path",
+          "source_title",
+          "original_excerpt",
+          "suggested_excerpt",
+          "rationale",
+          "confidence",
+          "review_narrative"
+        ],
+        "title": "EditSuggestion",
+        "description": "An apply-ready documentation replacement tied to one source excerpt."
       },
       "ErrorModel": {
         "properties": {
@@ -1028,6 +1255,37 @@
         ],
         "title": "ItemRead"
       },
+      "NoSuggestionsResult": {
+        "properties": {
+          "reason": {
+            "type": "string",
+            "maxLength": 1200,
+            "minLength": 1,
+            "title": "Reason"
+          },
+          "searched_sources": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 8,
+            "title": "Searched Sources"
+          },
+          "review_narrative": {
+            "type": "string",
+            "maxLength": 1400,
+            "minLength": 1,
+            "title": "Review Narrative"
+          }
+        },
+        "type": "object",
+        "required": [
+          "reason",
+          "review_narrative"
+        ],
+        "title": "NoSuggestionsResult",
+        "description": "A grounded explanation for why no Edit Suggestions were produced."
+      },
       "Page_ItemRead_": {
         "properties": {
           "items": {
@@ -1093,6 +1351,223 @@
           "size"
         ],
         "title": "Page[ItemRead]"
+      },
+      "ReviewDecision": {
+        "type": "string",
+        "enum": [
+          "approved",
+          "rejected"
+        ],
+        "title": "ReviewDecision",
+        "description": "Decision a reviewer makes for one Edit Suggestion."
+      },
+      "ReviewedSuggestion": {
+        "properties": {
+          "suggestion": {
+            "$ref": "#/components/schemas/EditSuggestion"
+          },
+          "decision": {
+            "$ref": "#/components/schemas/ReviewDecision"
+          },
+          "final_excerpt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 4000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Final Excerpt"
+          },
+          "reviewer_note": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1200
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reviewer Note"
+          }
+        },
+        "type": "object",
+        "required": [
+          "suggestion",
+          "decision"
+        ],
+        "title": "ReviewedSuggestion",
+        "description": "One reviewed suggestion with the user's final decision and edits."
+      },
+      "SaveReviewedUpdateRequest": {
+        "properties": {
+          "request": {
+            "type": "string",
+            "maxLength": 4000,
+            "minLength": 8,
+            "title": "Request"
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 160,
+            "minLength": 3,
+            "title": "Title"
+          },
+          "summary": {
+            "type": "string",
+            "maxLength": 600,
+            "minLength": 3,
+            "title": "Summary"
+          },
+          "reviewed_suggestions": {
+            "items": {
+              "$ref": "#/components/schemas/ReviewedSuggestion"
+            },
+            "type": "array",
+            "maxItems": 3,
+            "title": "Reviewed Suggestions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "request",
+          "title",
+          "summary"
+        ],
+        "title": "SaveReviewedUpdateRequest",
+        "description": "Request body for persisting reviewed documentation changes."
+      },
+      "SavedUpdateRead": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary"
+          },
+          "approved_count": {
+            "type": "integer",
+            "title": "Approved Count"
+          },
+          "rejected_count": {
+            "type": "integer",
+            "title": "Rejected Count"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "request": {
+            "type": "string",
+            "title": "Request"
+          },
+          "reviewed_suggestions": {
+            "items": {
+              "$ref": "#/components/schemas/ReviewedSuggestion"
+            },
+            "type": "array",
+            "title": "Reviewed Suggestions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "summary",
+          "approved_count",
+          "rejected_count",
+          "created_at",
+          "request",
+          "reviewed_suggestions"
+        ],
+        "title": "SavedUpdateRead",
+        "description": "Full Saved Update shape returned after saving."
+      },
+      "SavedUpdateSummary": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary"
+          },
+          "approved_count": {
+            "type": "integer",
+            "title": "Approved Count"
+          },
+          "rejected_count": {
+            "type": "integer",
+            "title": "Rejected Count"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "summary",
+          "approved_count",
+          "rejected_count",
+          "created_at"
+        ],
+        "title": "SavedUpdateSummary",
+        "description": "Compact Saved Update shape used by the list view."
+      },
+      "SuggestionEvidence": {
+        "properties": {
+          "source_path": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Source Path"
+          },
+          "source_title": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Source Title"
+          },
+          "source_url": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Source Url"
+          },
+          "quote": {
+            "type": "string",
+            "maxLength": 1200,
+            "minLength": 1,
+            "title": "Quote"
+          }
+        },
+        "type": "object",
+        "required": [
+          "source_path",
+          "source_title",
+          "source_url",
+          "quote"
+        ],
+        "title": "SuggestionEvidence",
+        "description": "A source excerpt used to justify an Edit Suggestion."
       },
       "UserCreate": {
         "properties": {

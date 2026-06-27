@@ -6,13 +6,28 @@ from .config import settings
 from .models import User
 
 
-def get_email_config():
+def get_email_config() -> ConnectionConfig:
+    username = settings.MAIL_USERNAME
+    password = settings.MAIL_PASSWORD
+    mail_from = settings.MAIL_FROM
+    port = settings.MAIL_PORT
+    server = settings.MAIL_SERVER
+
+    if (
+        username is None
+        or password is None
+        or mail_from is None
+        or port is None
+        or server is None
+    ):
+        raise RuntimeError("Email settings are not fully configured.")
+
     conf = ConnectionConfig(
-        MAIL_USERNAME=settings.MAIL_USERNAME,
-        MAIL_PASSWORD=settings.MAIL_PASSWORD,
-        MAIL_FROM=settings.MAIL_FROM,
-        MAIL_PORT=settings.MAIL_PORT,
-        MAIL_SERVER=settings.MAIL_SERVER,
+        MAIL_USERNAME=username,
+        MAIL_PASSWORD=password,
+        MAIL_FROM=mail_from,
+        MAIL_PORT=port,
+        MAIL_SERVER=server,
         MAIL_FROM_NAME=settings.MAIL_FROM_NAME,
         MAIL_STARTTLS=settings.MAIL_STARTTLS,
         MAIL_SSL_TLS=settings.MAIL_SSL_TLS,
@@ -23,7 +38,7 @@ def get_email_config():
     return conf
 
 
-async def send_reset_password_email(user: User, token: str):
+async def send_reset_password_email(user: User, token: str) -> None:
     conf = get_email_config()
     email = user.email
     base_url = f"{settings.FRONTEND_URL}/password-recovery/confirm?"

@@ -1,0 +1,3 @@
+# Use a Single Agents SDK Reviewer First
+
+The challenge rewards AI quality more than web app breadth, so the Documentation Review workflow will use the actual Python OpenAI Agents SDK package (`openai-agents`) rather than a plain one-off Responses API call hidden behind an "agent" name. We will start with one reviewer agent plus documentation search tools, and defer handoffs or multi-agent orchestration until the single-agent pipeline produces useful, evidence-backed Edit Suggestions; this keeps the AI path explicit and traceable without adding orchestration cost before there is a specialist split to justify it.

@@ -70,6 +70,7 @@ instance/
 
 # Sphinx documentation
 docs/_build/
+fastapi_backend/app/documentation_review/corpus_raw/
 
 # PyBuilder
 .pybuilder/
@@ -116,6 +117,9 @@ celerybeat.pid
 
 # Environments
 .env
+.env.*
+!.env.example
+!**/.env.example
 .venv
 env/
 venv/
