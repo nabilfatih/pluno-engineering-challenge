@@ -44,6 +44,7 @@ export type {
   DeleteItemData,
   DeleteItemError,
   DeleteItemErrors,
+  DeleteItemResponse,
   DeleteItemResponses,
   DocumentationReviewRequest,
   DocumentationReviewResponse,

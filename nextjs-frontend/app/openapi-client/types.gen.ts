@@ -987,10 +987,16 @@ export type DeleteItemError = DeleteItemErrors[keyof DeleteItemErrors];
 
 export type DeleteItemResponses = {
   /**
+   * Response Item-Delete Item
+   *
    * Successful Response
    */
-  200: unknown;
+  200: {
+    [key: string]: string;
+  };
 };
+
+export type DeleteItemResponse = DeleteItemResponses[keyof DeleteItemResponses];
 
 export type ProposeDocumentationSuggestionsData = {
   body: DocumentationReviewRequest;
