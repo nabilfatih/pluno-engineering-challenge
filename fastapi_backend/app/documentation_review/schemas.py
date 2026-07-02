@@ -1,8 +1,9 @@
 from datetime import datetime
 from enum import StrEnum
+from typing import Self
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 class ReviewDecision(StrEnum):
@@ -69,6 +70,21 @@ class ReviewedSuggestion(BaseModel):
     decision: ReviewDecision
     final_excerpt: str | None = Field(default=None, max_length=4000)
     reviewer_note: str | None = Field(default=None, max_length=1200)
+
+    @model_validator(mode="after")
+    def validate_final_excerpt_for_decision(self) -> Self:
+        """Ensure Review Decisions cannot persist impossible final excerpts."""
+
+        if self.decision == ReviewDecision.APPROVED:
+            if self.final_excerpt and self.final_excerpt.strip():
+                return self
+
+            raise ValueError("Approved suggestions require final_excerpt.")
+
+        if self.final_excerpt is not None:
+            raise ValueError("Rejected suggestions cannot include final_excerpt.")
+
+        return self
 
 
 class SaveReviewedUpdateRequest(BaseModel):

@@ -1,7 +1,7 @@
 from collections.abc import Iterator, Sequence
 
 from fastapi import status
-from httpx import AsyncClient
+from httpx import ASGITransport, AsyncClient
 import pytest
 
 from app.documentation_review.corpus_loader import (
@@ -85,6 +85,34 @@ async def test_review_and_save_workflow(
 
     assert list_response.status_code == status.HTTP_200_OK
     assert list_response.json()[0]["title"] == "Clarify Runner output"
+
+
+@pytest.mark.asyncio(loop_scope="function")
+async def test_save_rejects_rejected_suggestion_with_final_excerpt() -> None:
+    """Malformed Review Decisions are rejected before persistence."""
+
+    async with AsyncClient(
+        transport=ASGITransport(app=app),
+        base_url="http://localhost:8000",
+    ) as client:
+        save_response = await client.post(
+            "/documentation-reviews/saved-updates",
+            json={
+                "request": "Clarify that Runner.run returns final_output.",
+                "title": "Clarify Runner output",
+                "summary": "Rejected suggestions should not persist replacements.",
+                "reviewed_suggestions": [
+                    {
+                        "suggestion": _suggestion().model_dump(mode="json"),
+                        "decision": "rejected",
+                        "final_excerpt": "This replacement must not be saved.",
+                    }
+                ],
+            },
+        )
+
+    assert save_response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+    assert "Rejected suggestions cannot include final_excerpt." in save_response.text
 
 
 def _suggestion() -> EditSuggestion:
