@@ -1,4 +1,5 @@
-from typing import Protocol, Sequence
+from collections.abc import Sequence
+from typing import Protocol
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -28,6 +29,7 @@ class DocumentationReviewer(Protocol):
         sources: Sequence[DocumentationSource],
     ) -> GeneratedDocumentationReview:
         """Generate raw Edit Suggestions before local grounding validation."""
+        ...
 
 
 class DocumentationReviewModule:
@@ -38,8 +40,10 @@ class DocumentationReviewModule:
         reviewer: DocumentationReviewer,
         sources: Sequence[DocumentationSource] | None = None,
     ) -> None:
-        self.reviewer = reviewer
-        self.sources = list(sources or load_documentation_sources())
+        self.reviewer: DocumentationReviewer = reviewer
+        self.sources: list[DocumentationSource] = list(
+            sources or load_documentation_sources()
+        )
 
     @classmethod
     def from_settings(cls, settings: Settings) -> "DocumentationReviewModule":

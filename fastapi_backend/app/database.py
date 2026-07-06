@@ -1,4 +1,5 @@
 from collections.abc import AsyncGenerator
+from typing import Annotated
 from urllib.parse import urlparse
 from uuid import UUID
 
@@ -37,7 +38,10 @@ async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
         yield session
 
 
+AsyncSessionDep = Annotated[AsyncSession, Depends(get_async_session)]
+
+
 async def get_user_db(
-    session: AsyncSession = Depends(get_async_session),
+    session: AsyncSessionDep,
 ) -> AsyncGenerator[SQLAlchemyUserDatabase[User, UUID], None]:
     yield SQLAlchemyUserDatabase(session, User)

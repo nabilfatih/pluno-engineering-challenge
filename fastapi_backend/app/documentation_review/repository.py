@@ -1,5 +1,3 @@
-from datetime import datetime
-from typing import cast
 from uuid import UUID
 
 from sqlalchemy import desc, select
@@ -75,16 +73,15 @@ def saved_update_read(saved: SavedUpdate) -> SavedUpdateRead:
     """Convert a persisted Saved Update into its response contract."""
 
     reviewed_suggestions = [
-        ReviewedSuggestion.model_validate(item)
-        for item in cast(list[object], saved.reviewed_suggestions)
+        ReviewedSuggestion.model_validate(item) for item in saved.reviewed_suggestions
     ]
 
     return SavedUpdateRead(
-        id=cast(UUID, saved.id),
-        title=cast(str, saved.title),
-        request=cast(str, saved.request_text),
+        id=saved.id,
+        title=saved.title,
+        request=saved.request_text,
         reviewed_suggestions=reviewed_suggestions,
-        approved_count=cast(int, saved.approved_count),
-        rejected_count=cast(int, saved.rejected_count),
-        created_at=cast(datetime, saved.created_at),
+        approved_count=saved.approved_count,
+        rejected_count=saved.rejected_count,
+        created_at=saved.created_at,
     )

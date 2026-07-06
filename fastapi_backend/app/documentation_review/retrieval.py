@@ -1,6 +1,6 @@
 import re
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Sequence
 
 from .corpus_loader import DocumentationSource
 
@@ -125,7 +125,7 @@ def score_chunk(request: str, chunk: DocumentationChunk) -> int:
 def render_chunks(chunks: Sequence[DocumentationChunk]) -> str:
     """Render retrieved chunks into compact text for an agent prompt or tool."""
 
-    sections = []
+    sections: list[str] = []
     for chunk in chunks:
         sections.append(
             "\n".join(
@@ -166,13 +166,13 @@ def _append_chunk(
 
 
 def _terms(text: str) -> list[str]:
-    words = re.findall(r"[a-zA-Z][a-zA-Z0-9_]{2,}", text.lower())
+    words: list[str] = re.findall(r"[a-zA-Z][a-zA-Z0-9_]{2,}", text.lower())
     return [word for word in words if word not in STOPWORDS]
 
 
 def _phrases(text: str) -> list[str]:
     normalized = re.sub(r"\s+", " ", text.lower())
-    matches = []
+    matches: list[str] = []
 
     for aliases in ALIASES.values():
         for alias in aliases:

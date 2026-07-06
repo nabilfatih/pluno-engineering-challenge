@@ -17,7 +17,7 @@ def load_documentation_sources() -> list[DocumentationSource]:
     """Load committed documentation snapshots from the package corpus."""
 
     corpus_dir = Path(__file__).with_name("corpus")
-    sources = []
+    sources: list[DocumentationSource] = []
 
     for source_file in sorted(corpus_dir.glob("*.md")):
         text = source_file.read_text(encoding="utf-8")

@@ -1,9 +1,9 @@
 from datetime import datetime
 from enum import StrEnum
-from typing import Self
+from typing import ClassVar, Self
 from uuid import UUID
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class ReviewDecision(StrEnum):
@@ -107,7 +107,7 @@ class SavedUpdateSummary(BaseModel):
     rejected_count: int
     created_at: datetime
 
-    model_config = {"from_attributes": True}
+    model_config: ClassVar[ConfigDict] = ConfigDict(from_attributes=True)
 
 
 class SavedUpdateRead(SavedUpdateSummary):

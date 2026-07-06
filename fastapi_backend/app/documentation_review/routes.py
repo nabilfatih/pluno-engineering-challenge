@@ -1,4 +1,5 @@
 from functools import lru_cache
+from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -27,10 +28,17 @@ def get_documentation_review_module() -> DocumentationReviewModule:
     return DocumentationReviewModule.from_settings(settings)
 
 
+DocumentationReviewModuleDep = Annotated[
+    DocumentationReviewModule,
+    Depends(get_documentation_review_module),
+]
+AsyncSessionDep = Annotated[AsyncSession, Depends(get_async_session)]
+
+
 @router.post("/suggestions", response_model=DocumentationReviewResponse)
 async def propose_documentation_suggestions(
     payload: DocumentationReviewRequest,
-    module: DocumentationReviewModule = Depends(get_documentation_review_module),
+    module: DocumentationReviewModuleDep,
 ) -> DocumentationReviewResponse:
     """Generate grounded Edit Suggestions for a documentation update request."""
 
@@ -46,8 +54,8 @@ async def propose_documentation_suggestions(
 @router.post("/saved-updates", response_model=SavedUpdateRead)
 async def save_documentation_update(
     payload: SaveReviewedUpdateRequest,
-    db: AsyncSession = Depends(get_async_session),
-    module: DocumentationReviewModule = Depends(get_documentation_review_module),
+    db: AsyncSessionDep,
+    module: DocumentationReviewModuleDep,
 ) -> SavedUpdateRead:
     """Persist the user's reviewed documentation update."""
 
@@ -56,8 +64,8 @@ async def save_documentation_update(
 
 @router.get("/saved-updates", response_model=list[SavedUpdateSummary])
 async def list_documentation_updates(
-    db: AsyncSession = Depends(get_async_session),
-    module: DocumentationReviewModule = Depends(get_documentation_review_module),
+    db: AsyncSessionDep,
+    module: DocumentationReviewModuleDep,
 ) -> list[SavedUpdateSummary]:
     """List previously saved documentation updates."""
 
@@ -67,8 +75,8 @@ async def list_documentation_updates(
 @router.get("/saved-updates/{saved_update_id}", response_model=SavedUpdateRead)
 async def get_documentation_update(
     saved_update_id: UUID,
-    db: AsyncSession = Depends(get_async_session),
-    module: DocumentationReviewModule = Depends(get_documentation_review_module),
+    db: AsyncSessionDep,
+    module: DocumentationReviewModuleDep,
 ) -> SavedUpdateRead:
     """Return one saved documentation update with full reviewed suggestions."""
 

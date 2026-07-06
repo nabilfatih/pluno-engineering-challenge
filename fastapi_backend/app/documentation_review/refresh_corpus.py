@@ -1,4 +1,6 @@
+from http.client import HTTPResponse
 from pathlib import Path
+from typing import cast
 from urllib.request import urlopen
 
 PAGES = {
@@ -16,8 +18,9 @@ def main() -> None:
     output_dir.mkdir(exist_ok=True)
 
     for filename, url in PAGES.items():
-        with urlopen(url, timeout=20) as response:
-            output_dir.joinpath(filename).write_bytes(response.read())
+        with cast(HTTPResponse, urlopen(url, timeout=20)) as response:
+            body: bytes = response.read()
+            _ = output_dir.joinpath(filename).write_bytes(body)
 
 
 if __name__ == "__main__":

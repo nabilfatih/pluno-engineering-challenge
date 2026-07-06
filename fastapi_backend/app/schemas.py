@@ -1,8 +1,9 @@
 import uuid
+from typing import ClassVar
+from uuid import UUID
 
 from fastapi_users import schemas
-from pydantic import BaseModel
-from uuid import UUID
+from pydantic import BaseModel, ConfigDict
 
 
 class UserRead(schemas.BaseUser[uuid.UUID]):
@@ -31,4 +32,4 @@ class ItemRead(ItemBase):
     id: UUID
     user_id: UUID
 
-    model_config = {"from_attributes": True}
+    model_config: ClassVar[ConfigDict] = ConfigDict(from_attributes=True)

@@ -1,4 +1,5 @@
-from typing import Sequence
+from collections.abc import Sequence
+from typing import cast
 
 from agents import Agent, Runner, function_tool, set_default_openai_key
 
@@ -15,8 +16,8 @@ class OpenAIDocumentationReviewer:
     """Agents SDK adapter that turns a request into grounded suggestions."""
 
     def __init__(self, model: str, api_key: str | None) -> None:
-        self.model = model
-        self.api_key = api_key
+        self.model: str = model
+        self.api_key: str | None = api_key
 
     async def review(
         self,
@@ -47,11 +48,12 @@ class OpenAIDocumentationReviewer:
         result = await Runner.run(
             agent, _review_prompt(request, render_chunks(retrieved))
         )
+        final_output = cast(object, result.final_output)
 
-        if isinstance(result.final_output, GeneratedDocumentationReview):
-            return result.final_output
+        if isinstance(final_output, GeneratedDocumentationReview):
+            return final_output
 
-        return GeneratedDocumentationReview.model_validate(result.final_output)
+        return GeneratedDocumentationReview.model_validate(final_output)
 
 
 def _review_prompt(request: str, context: str) -> str:

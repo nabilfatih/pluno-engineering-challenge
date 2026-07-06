@@ -1,12 +1,14 @@
-from fastapi import FastAPI
-from fastapi_pagination import add_pagination
-from .schemas import UserCreate, UserRead, UserUpdate
-from .users import auth_backend, fastapi_users, AUTH_URL_PATH
+from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .utils import simple_generate_unique_route_id
+from fastapi_pagination import add_pagination
+
+from app.config import settings
 from app.documentation_review.routes import router as documentation_review_router
 from app.routes.items import router as items_router
-from app.config import settings
+
+from .schemas import UserCreate, UserRead, UserUpdate
+from .users import AUTH_URL_PATH, auth_backend, fastapi_users
+from .utils import simple_generate_unique_route_id
 
 app = FastAPI(
     generate_unique_id_function=simple_generate_unique_route_id,
@@ -23,8 +25,9 @@ app.add_middleware(
 )
 
 # Include authentication and user management routes
+auth_router: APIRouter = fastapi_users.get_auth_router(auth_backend)  # pyright: ignore[reportUnknownMemberType]
 app.include_router(
-    fastapi_users.get_auth_router(auth_backend),
+    auth_router,
     prefix=f"/{AUTH_URL_PATH}/jwt",
     tags=["auth"],
 )
@@ -52,4 +55,4 @@ app.include_router(
 # Include items routes
 app.include_router(items_router, prefix="/items")
 app.include_router(documentation_review_router)
-add_pagination(app)
+_ = add_pagination(app)

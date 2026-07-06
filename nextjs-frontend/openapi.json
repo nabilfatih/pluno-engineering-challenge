@@ -681,6 +681,7 @@
           "item"
         ],
         "summary": "Read Item",
+        "description": "Return the authenticated user's Items as a paginated collection.",
         "operationId": "read_item",
         "security": [
           {
@@ -744,6 +745,7 @@
           "item"
         ],
         "summary": "Create Item",
+        "description": "Create one Item owned by the authenticated user.",
         "operationId": "create_item",
         "security": [
           {
@@ -790,6 +792,7 @@
           "item"
         ],
         "summary": "Delete Item",
+        "description": "Delete one authenticated-user-owned Item.",
         "operationId": "delete_item",
         "security": [
           {

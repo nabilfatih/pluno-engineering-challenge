@@ -1,5 +1,5 @@
 import re
-from typing import Sequence
+from collections.abc import Sequence
 
 from .corpus_loader import DocumentationSource
 from .schemas import (

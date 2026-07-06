@@ -335,6 +335,8 @@ export const usersPatchUser = <ThrowOnError extends boolean = false>(
 
 /**
  * Read Item
+ *
+ * Return the authenticated user's Items as a paginated collection.
  */
 export const readItem = <ThrowOnError extends boolean = false>(
   options?: Options<ReadItemData, ThrowOnError>,
@@ -351,6 +353,8 @@ export const readItem = <ThrowOnError extends boolean = false>(
 
 /**
  * Create Item
+ *
+ * Create one Item owned by the authenticated user.
  */
 export const createItem = <ThrowOnError extends boolean = false>(
   options: Options<CreateItemData, ThrowOnError>,
@@ -371,6 +375,8 @@ export const createItem = <ThrowOnError extends boolean = false>(
 
 /**
  * Delete Item
+ *
+ * Delete one authenticated-user-owned Item.
  */
 export const deleteItem = <ThrowOnError extends boolean = false>(
   options: Options<DeleteItemData, ThrowOnError>,
