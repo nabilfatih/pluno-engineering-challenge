@@ -22,6 +22,9 @@ import type {
   DeleteItemData,
   DeleteItemErrors,
   DeleteItemResponses,
+  GetDocumentationUpdateData,
+  GetDocumentationUpdateErrors,
+  GetDocumentationUpdateResponses,
   ListDocumentationUpdatesData,
   ListDocumentationUpdatesResponses,
   ProposeDocumentationSuggestionsData,
@@ -446,4 +449,25 @@ export const saveDocumentationUpdate = <ThrowOnError extends boolean = false>(
       "Content-Type": "application/json",
       ...options.headers,
     },
+  });
+
+/**
+ * Get Documentation Update
+ *
+ * Return one saved documentation update with full reviewed suggestions.
+ */
+export const getDocumentationUpdate = <ThrowOnError extends boolean = false>(
+  options: Options<GetDocumentationUpdateData, ThrowOnError>,
+): RequestResult<
+  GetDocumentationUpdateResponses,
+  GetDocumentationUpdateErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).get<
+    GetDocumentationUpdateResponses,
+    GetDocumentationUpdateErrors,
+    ThrowOnError
+  >({
+    url: "/documentation-reviews/saved-updates/{saved_update_id}",
+    ...options,
   });

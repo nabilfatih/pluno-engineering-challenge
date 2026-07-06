@@ -62,6 +62,8 @@ Frontend ownership stays focused:
 - TanStack Form owns the request input; local review state owns decisions and
   replacement text so approve/reject interactions cannot reset the final saved
   payload. Save title/summary metadata is derived from the generated review.
+- The saved panel lists compact history rows and loads the full persisted review
+  when a row is selected.
 - shadcn/ui primitives provide the design system.
 - The generated OpenAPI client keeps the frontend/backend contract typed.
 
@@ -149,6 +151,7 @@ Open `http://localhost:3000`.
 - `POST /documentation-reviews/suggestions`
 - `POST /documentation-reviews/saved-updates`
 - `GET /documentation-reviews/saved-updates`
+- `GET /documentation-reviews/saved-updates/{saved_update_id}`
 
 The OpenAPI schema is generated from FastAPI and consumed by the Next.js client.
 

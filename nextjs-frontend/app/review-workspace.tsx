@@ -11,7 +11,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { SavedUpdatesPanel } from "@/components/documentation-review/saved-updates-panel";
+import { SavedUpdateDetail } from "@/components/documentation-review/saved/detail";
+import { SavedUpdatesPanel } from "@/components/documentation-review/saved/panel";
 import {
   SuggestionCard,
   SuggestionSkeleton,
@@ -23,10 +24,11 @@ import {
   type SuggestionReviewState,
 } from "@/components/documentation-review/review-state";
 import {
+  getSavedDocumentationUpdate,
   listSavedDocumentationUpdates,
   requestDocumentationSuggestions,
   saveReviewedDocumentationUpdate,
-} from "@/lib/documentationReviewClient";
+} from "@/lib/review-client";
 
 const exampleRequest =
   "We don't support agents as_tool anymore, other agents should only be invoked via handoff.";
@@ -39,12 +41,20 @@ export function DocumentationReviewWorkspace() {
   const [reviewState, setReviewState] = useState<
     Record<string, SuggestionReviewState>
   >({});
+  const [selectedSavedUpdateId, setSelectedSavedUpdateId] = useState<
+    string | null
+  >(null);
   const [saveFormError, setSaveFormError] = useState<string | null>(null);
-  const [saveSuccess, setSaveSuccess] = useState<string | null>(null);
 
   const savedUpdatesQuery = useQuery({
     queryKey: ["saved-documentation-updates"],
     queryFn: listSavedDocumentationUpdates,
+  });
+
+  const savedUpdateDetailQuery = useQuery({
+    enabled: Boolean(selectedSavedUpdateId),
+    queryKey: ["saved-documentation-update", selectedSavedUpdateId],
+    queryFn: () => getSavedDocumentationUpdate(selectedSavedUpdateId ?? ""),
   });
 
   const suggestionsMutation = useMutation({
@@ -53,19 +63,25 @@ export function DocumentationReviewWorkspace() {
       const suggestions = result.suggestions ?? [];
       setReview(result);
       setReviewState(createReviewState(suggestions));
+      setSelectedSavedUpdateId(null);
       setSaveFormError(null);
-      setSaveSuccess(null);
     },
   });
 
   const saveMutation = useMutation({
     mutationFn: saveReviewedDocumentationUpdate,
-    onSuccess: async () => {
+    onSuccess: async (savedUpdate) => {
       await queryClient.invalidateQueries({
         queryKey: ["saved-documentation-updates"],
       });
+      queryClient.setQueryData(
+        ["saved-documentation-update", savedUpdate.id],
+        savedUpdate,
+      );
+      setReview(null);
+      setReviewState({});
+      setSelectedSavedUpdateId(savedUpdate.id);
       setSaveFormError(null);
-      setSaveSuccess("Reviewed update saved.");
     },
   });
 
@@ -74,7 +90,6 @@ export function DocumentationReviewWorkspace() {
     onSubmit: async ({ value }) => {
       const request = value.request.trim();
       if (request.length < 8) {
-        setSaveSuccess(null);
         setSaveFormError("Request must be at least 8 characters.");
         return;
       }
@@ -82,14 +97,21 @@ export function DocumentationReviewWorkspace() {
       saveMutation.reset();
       setReview(null);
       setReviewState({});
-      setSaveSuccess(null);
+      setSelectedSavedUpdateId(null);
       setSaveFormError(null);
       suggestionsMutation.mutate(request);
     },
   });
 
   const suggestions = review?.suggestions ?? [];
-  const activeError = suggestionsMutation.error ?? saveMutation.error;
+  const savedUpdateDetailError = selectedSavedUpdateId
+    ? savedUpdateDetailQuery.error
+    : null;
+  const activeError =
+    suggestionsMutation.error ?? saveMutation.error ?? savedUpdateDetailError;
+  const activeErrorTitle = savedUpdateDetailError
+    ? "Saved update not loaded"
+    : "Request failed";
   const canSave = suggestions.length > 0 && !saveMutation.isPending;
 
   function handleSaveReviewedUpdate() {
@@ -98,7 +120,6 @@ export function DocumentationReviewWorkspace() {
     }
 
     saveMutation.reset();
-    setSaveSuccess(null);
     setSaveFormError(null);
 
     const approvedSuggestionWithoutExcerpt = suggestions.some((suggestion) => {
@@ -183,7 +204,7 @@ export function DocumentationReviewWorkspace() {
 
             {activeError ? (
               <Alert variant="destructive">
-                <AlertTitle>Request failed</AlertTitle>
+                <AlertTitle>{activeErrorTitle}</AlertTitle>
                 <AlertDescription>
                   {activeError instanceof Error
                     ? activeError.message
@@ -199,65 +220,78 @@ export function DocumentationReviewWorkspace() {
               </Alert>
             ) : null}
 
-            {saveSuccess ? (
-              <Alert>
-                <AlertTitle>Saved</AlertTitle>
-                <AlertDescription>{saveSuccess}</AlertDescription>
-              </Alert>
-            ) : null}
+            {selectedSavedUpdateId ? (
+              <>
+                {savedUpdateDetailQuery.isLoading ? (
+                  <SuggestionSkeleton />
+                ) : null}
+                {savedUpdateDetailQuery.data ? (
+                  <SavedUpdateDetail update={savedUpdateDetailQuery.data} />
+                ) : null}
+              </>
+            ) : (
+              <>
+                {suggestionsMutation.isPending ? <SuggestionSkeleton /> : null}
 
-            {suggestionsMutation.isPending ? <SuggestionSkeleton /> : null}
+                {review?.no_suggestions ? (
+                  <Alert>
+                    <AlertTitle>No suggestions</AlertTitle>
+                    <AlertDescription>
+                      {review.no_suggestions.review_narrative}
+                    </AlertDescription>
+                  </Alert>
+                ) : null}
 
-            {review?.no_suggestions ? (
-              <Alert>
-                <AlertTitle>No suggestions</AlertTitle>
-                <AlertDescription>
-                  {review.no_suggestions.review_narrative}
-                </AlertDescription>
-              </Alert>
-            ) : null}
+                {suggestions.map((suggestion, index) => (
+                  <SuggestionCard
+                    key={suggestion.id}
+                    position={index + 1}
+                    suggestion={suggestion}
+                    state={reviewState[suggestion.id]}
+                    total={suggestions.length}
+                    onChange={(nextState) =>
+                      setReviewState((current) => ({
+                        ...current,
+                        [suggestion.id]: nextState,
+                      }))
+                    }
+                  />
+                ))}
 
-            {suggestions.map((suggestion) => (
-              <SuggestionCard
-                key={suggestion.id}
-                suggestion={suggestion}
-                state={reviewState[suggestion.id]}
-                onChange={(nextState) =>
-                  setReviewState((current) => ({
-                    ...current,
-                    [suggestion.id]: nextState,
-                  }))
-                }
-              />
-            ))}
-
-            {suggestions.length > 0 ? (
-              <form
-                className="flex justify-end"
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  handleSaveReviewedUpdate();
-                }}
-              >
-                <Button
-                  className="w-full sm:w-auto"
-                  type="submit"
-                  disabled={!canSave}
-                >
-                  {saveMutation.isPending ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  ) : (
-                    <Save className="mr-2 h-4 w-4" />
-                  )}
-                  {saveMutation.isPending ? "Saving" : "Save review"}
-                </Button>
-              </form>
-            ) : null}
+                {suggestions.length > 0 ? (
+                  <form
+                    className="flex justify-end"
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                      handleSaveReviewedUpdate();
+                    }}
+                  >
+                    <Button
+                      className="w-full sm:w-auto"
+                      type="submit"
+                      disabled={!canSave}
+                    >
+                      {saveMutation.isPending ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <Save className="mr-2 h-4 w-4" />
+                      )}
+                      {saveMutation.isPending ? "Saving" : "Save review"}
+                    </Button>
+                  </form>
+                ) : null}
+              </>
+            )}
           </section>
 
           <SavedUpdatesPanel
             isLoading={savedUpdatesQuery.isLoading}
+            selectedUpdateId={selectedSavedUpdateId}
             updates={savedUpdatesQuery.data ?? []}
+            onSelect={(savedUpdateId) => {
+              setSelectedSavedUpdateId(savedUpdateId);
+              setSaveFormError(null);
+            }}
           />
         </div>
       </div>

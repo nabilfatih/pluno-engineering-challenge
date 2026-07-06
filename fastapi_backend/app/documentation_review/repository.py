@@ -59,6 +59,19 @@ async def list_saved_updates(db: AsyncSession) -> list[SavedUpdateSummary]:
     return [SavedUpdateSummary.model_validate(row) for row in result.scalars()]
 
 
+async def get_saved_update(
+    db: AsyncSession,
+    saved_update_id: UUID,
+) -> SavedUpdateRead | None:
+    """Return one Saved Update with full reviewed suggestions when it exists."""
+
+    saved = await db.get(SavedUpdate, saved_update_id)
+    if saved is None:
+        return None
+
+    return saved_update_read(saved)
+
+
 def saved_update_read(saved: SavedUpdate) -> SavedUpdateRead:
     """Convert a persisted Saved Update into its response contract."""
 

@@ -1,4 +1,5 @@
 import {
+  getDocumentationUpdate,
   listDocumentationUpdates,
   proposeDocumentationSuggestions,
   saveDocumentationUpdate,
@@ -55,6 +56,24 @@ export async function listSavedDocumentationUpdates(): Promise<
 > {
   try {
     const response = await listDocumentationUpdates<true>({
+      throwOnError: true,
+    });
+
+    return response.data;
+  } catch (error) {
+    throw normalizeClientError(error);
+  }
+}
+
+/**
+ * Loads one saved update with the full reviewed suggestions payload.
+ */
+export async function getSavedDocumentationUpdate(
+  savedUpdateId: string,
+): Promise<SavedUpdateRead> {
+  try {
+    const response = await getDocumentationUpdate<true>({
+      path: { saved_update_id: savedUpdateId },
       throwOnError: true,
     });
 

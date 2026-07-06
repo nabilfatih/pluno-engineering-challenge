@@ -1,4 +1,5 @@
 from functools import lru_cache
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -61,3 +62,21 @@ async def list_documentation_updates(
     """List previously saved documentation updates."""
 
     return await module.list_saved_updates(db)
+
+
+@router.get("/saved-updates/{saved_update_id}", response_model=SavedUpdateRead)
+async def get_documentation_update(
+    saved_update_id: UUID,
+    db: AsyncSession = Depends(get_async_session),
+    module: DocumentationReviewModule = Depends(get_documentation_review_module),
+) -> SavedUpdateRead:
+    """Return one saved documentation update with full reviewed suggestions."""
+
+    saved_update = await module.get_saved_update(db, saved_update_id)
+    if saved_update is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Saved update not found.",
+        )
+
+    return saved_update

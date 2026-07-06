@@ -12,22 +12,39 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 
 export function SuggestionCard({
+  position,
   suggestion,
   state,
+  total,
   onChange,
 }: {
+  position: number;
   suggestion: EditSuggestion;
   state: SuggestionReviewState;
+  total: number;
   onChange: (state: SuggestionReviewState) => void;
 }) {
   const approved = state.decision === "approved";
+  const hasMultipleSuggestions = total > 1;
 
   return (
     <Card>
       <CardHeader className="space-y-3">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <CardTitle className="text-base">{suggestion.source_title}</CardTitle>
+          <div className="min-w-0 space-y-1">
+            <CardTitle className="text-base">
+              {suggestion.source_title}
+            </CardTitle>
+            <p className="text-xs text-muted-foreground">
+              {suggestion.source_path}
+            </p>
+          </div>
           <div className="flex flex-wrap gap-2">
+            {hasMultipleSuggestions ? (
+              <Badge variant="outline">
+                {position}/{total}
+              </Badge>
+            ) : null}
             <Badge variant={approved ? "default" : "destructive"}>
               {approved ? "Approved" : "Rejected"}
             </Badge>
@@ -54,37 +71,23 @@ export function SuggestionCard({
             />
           </div>
         </div>
-        <Textarea
-          aria-label="Reviewer note"
-          className="min-h-20 resize-y"
-          placeholder="Reviewer note"
-          value={state.reviewerNote}
-          onChange={(event) =>
-            onChange({ ...state, reviewerNote: event.target.value })
-          }
-        />
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <p className="text-xs text-muted-foreground">
-            {suggestion.source_path}
-          </p>
-          <div className="flex flex-wrap gap-2">
-            <Button
-              type="button"
-              variant={approved ? "default" : "outline"}
-              onClick={() => onChange({ ...state, decision: "approved" })}
-            >
-              <Check className="mr-2 h-4 w-4" />
-              Approve
-            </Button>
-            <Button
-              type="button"
-              variant={!approved ? "destructive" : "outline"}
-              onClick={() => onChange({ ...state, decision: "rejected" })}
-            >
-              <X className="mr-2 h-4 w-4" />
-              Reject
-            </Button>
-          </div>
+        <div className="flex flex-wrap justify-end gap-2">
+          <Button
+            type="button"
+            variant={approved ? "default" : "outline"}
+            onClick={() => onChange({ ...state, decision: "approved" })}
+          >
+            <Check className="mr-2 h-4 w-4" />
+            Approve
+          </Button>
+          <Button
+            type="button"
+            variant={!approved ? "destructive" : "outline"}
+            onClick={() => onChange({ ...state, decision: "rejected" })}
+          >
+            <X className="mr-2 h-4 w-4" />
+            Reject
+          </Button>
         </div>
       </CardContent>
     </Card>

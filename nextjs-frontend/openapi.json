@@ -943,6 +943,50 @@
           }
         }
       }
+    },
+    "/documentation-reviews/saved-updates/{saved_update_id}": {
+      "get": {
+        "tags": [
+          "documentation-review"
+        ],
+        "summary": "Get Documentation Update",
+        "description": "Return one saved documentation update with full reviewed suggestions.",
+        "operationId": "get_documentation_update",
+        "parameters": [
+          {
+            "name": "saved_update_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Saved Update Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavedUpdateRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {

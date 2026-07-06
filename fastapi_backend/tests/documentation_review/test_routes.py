@@ -86,6 +86,34 @@ async def test_review_and_save_workflow(
     assert list_response.status_code == status.HTTP_200_OK
     assert list_response.json()[0]["title"] == "Clarify Runner output"
 
+    detail_response = await test_client.get(
+        f"/documentation-reviews/saved-updates/{saved['id']}"
+    )
+
+    assert detail_response.status_code == status.HTTP_200_OK
+    saved_detail = detail_response.json()
+    assert saved_detail["request"] == "Clarify that Runner.run returns final_output."
+    assert saved_detail["reviewed_suggestions"][0]["decision"] == "approved"
+    assert (
+        saved_detail["reviewed_suggestions"][0]["final_excerpt"]
+        == (suggestion_payload["suggested_excerpt"])
+    )
+
+
+@pytest.mark.asyncio(loop_scope="function")
+async def test_get_saved_update_returns_404_for_unknown_id(
+    test_client: AsyncClient,
+    fake_review_module: DocumentationReviewModule,
+) -> None:
+    """Saved Update details return a clear 404 when the row is missing."""
+
+    response = await test_client.get(
+        "/documentation-reviews/saved-updates/00000000-0000-0000-0000-000000000000"
+    )
+
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+    assert response.json()["detail"] == "Saved update not found."
+
 
 @pytest.mark.asyncio(loop_scope="function")
 async def test_save_rejects_rejected_suggestion_with_final_excerpt() -> None:

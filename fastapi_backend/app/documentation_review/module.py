@@ -1,11 +1,12 @@
 from typing import Protocol, Sequence
+from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import Settings
 
 from .corpus_loader import DocumentationSource, load_documentation_sources
-from .repository import list_saved_updates, save_reviewed_update
+from .repository import get_saved_update, list_saved_updates, save_reviewed_update
 from .reviewer_agent import OpenAIDocumentationReviewer
 from .schemas import (
     DocumentationReviewRequest,
@@ -73,3 +74,12 @@ class DocumentationReviewModule:
         """List previously saved updates."""
 
         return await list_saved_updates(db)
+
+    async def get_saved_update(
+        self,
+        db: AsyncSession,
+        saved_update_id: UUID,
+    ) -> SavedUpdateRead | None:
+        """Return one previously saved update with full reviewed suggestions."""
+
+        return await get_saved_update(db, saved_update_id)

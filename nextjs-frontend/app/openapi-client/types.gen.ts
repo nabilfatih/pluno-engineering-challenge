@@ -1070,3 +1070,35 @@ export type SaveDocumentationUpdateResponses = {
 
 export type SaveDocumentationUpdateResponse =
   SaveDocumentationUpdateResponses[keyof SaveDocumentationUpdateResponses];
+
+export type GetDocumentationUpdateData = {
+  body?: never;
+  path: {
+    /**
+     * Saved Update Id
+     */
+    saved_update_id: string;
+  };
+  query?: never;
+  url: "/documentation-reviews/saved-updates/{saved_update_id}";
+};
+
+export type GetDocumentationUpdateErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type GetDocumentationUpdateError =
+  GetDocumentationUpdateErrors[keyof GetDocumentationUpdateErrors];
+
+export type GetDocumentationUpdateResponses = {
+  /**
+   * Successful Response
+   */
+  200: SavedUpdateRead;
+};
+
+export type GetDocumentationUpdateResponse =
+  GetDocumentationUpdateResponses[keyof GetDocumentationUpdateResponses];

@@ -29,12 +29,12 @@ Build a documentation review app that turns a Documentation Update Request into 
 - Return up to 3 Edit Suggestions per Documentation Update Request.
 - Keep the challenge review workflow usable without login.
 - Persist Saved Updates in Postgres through the existing SQLAlchemy/Alembic stack.
-- Expose three challenge endpoints: generate suggestions, save reviewed updates, and list Saved Updates.
+- Expose challenge endpoints for generating suggestions, saving reviewed updates, listing Saved Updates, and loading one Saved Update.
 - Generate suggestions synchronously in v1.
 - Let users edit replacement excerpts and approve/reject suggestions; keep evidence and rationale read-only.
 - Save rejected suggestions as review history, but only approved or revised suggestions are apply-ready changes.
 - Allow saving a review when all suggestions are rejected.
-- Show a simple Saved Updates list in v1.
+- Show a clickable Saved Updates list in v1.
 - Make `/` the documentation review workspace.
 - Build the review workspace as a client component with TanStack Query and TanStack Form.
 - Call FastAPI directly from the browser through the generated OpenAPI client.
@@ -59,9 +59,9 @@ The JSON shape is enough for the take-home because the app only needs to save an
 
 ## Saved Updates List
 
-The frontend should show a simple list of Saved Updates so persistence is visible in the demo. Each list item should include a compact title or request summary, creation time, and approved change count.
+The frontend should show a simple clickable list of Saved Updates so persistence is visible in the demo. Each list item should include a compact title or request summary, creation time, and meaningful Review Decision counts.
 
-The list endpoint should return summary rows only: id, compact title or request summary, creation time, approved count, and rejected count. A saved-update detail endpoint is acceptable v1 polish if the core flow is already working, but it is not on the critical path.
+The list endpoint should return summary rows only: id, compact title or request summary, creation time, approved count, and rejected count. A Saved Update detail endpoint should return the full persisted review so clicking history rows shows exactly what was saved.
 
 ## Frontend Surface
 
@@ -76,6 +76,7 @@ The review workspace should be a client component. Use TanStack Query for server
 - generate suggestions
 - save reviewed updates
 - refresh the Saved Updates summary list
+- load one selected Saved Update
 
 Use TanStack Form for the Documentation Update Request form. Keep Review Decisions and final replacement excerpts in local review state so approve/reject interactions cannot reset the final saved payload. Derive Saved Update title/summary metadata from the generated review instead of asking reviewers to type bookkeeping fields. Read-only evidence and rationale stay outside editable form state.
 
@@ -159,11 +160,12 @@ The UI should not say "all good" unless the backend can confidently explain that
 
 ## Endpoint Shape
 
-Expose three challenge endpoints:
+Expose four challenge endpoints:
 
 - `POST /documentation-reviews/suggestions`
 - `POST /documentation-reviews/saved-updates`
 - `GET /documentation-reviews/saved-updates`
+- `GET /documentation-reviews/saved-updates/{saved_update_id}`
 
 Search, drafting, structured output parsing, grounding validation, and no-suggestions handling should stay behind the backend Documentation Review module interface. The frontend should not orchestrate internal AI pipeline steps.
 
