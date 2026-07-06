@@ -59,9 +59,9 @@ Frontend ownership stays focused:
 
 - `/` is the review workspace.
 - TanStack Query owns server state and mutations.
-- TanStack Form owns the request input; local review state owns decision and
-  save-review fields so approve/reject interactions cannot reset the final
-  saved payload.
+- TanStack Form owns the request input; local review state owns decisions and
+  replacement text so approve/reject interactions cannot reset the final saved
+  payload. Save title/summary metadata is derived from the generated review.
 - shadcn/ui primitives provide the design system.
 - The generated OpenAPI client keeps the frontend/backend contract typed.
 

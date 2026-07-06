@@ -10,8 +10,6 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { SavedUpdatesPanel } from "@/components/documentation-review/saved-updates-panel";
 import {
@@ -41,7 +39,6 @@ export function DocumentationReviewWorkspace() {
   const [reviewState, setReviewState] = useState<
     Record<string, SuggestionReviewState>
   >({});
-  const [saveValues, setSaveValues] = useState({ title: "", summary: "" });
   const [saveFormError, setSaveFormError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState<string | null>(null);
 
@@ -56,7 +53,6 @@ export function DocumentationReviewWorkspace() {
       const suggestions = result.suggestions ?? [];
       setReview(result);
       setReviewState(createReviewState(suggestions));
-      setSaveValues(createSaveDefaults(result));
       setSaveFormError(null);
       setSaveSuccess(null);
     },
@@ -86,7 +82,6 @@ export function DocumentationReviewWorkspace() {
       saveMutation.reset();
       setReview(null);
       setReviewState({});
-      setSaveValues({ title: "", summary: "" });
       setSaveSuccess(null);
       setSaveFormError(null);
       suggestionsMutation.mutate(request);
@@ -106,14 +101,6 @@ export function DocumentationReviewWorkspace() {
     setSaveSuccess(null);
     setSaveFormError(null);
 
-    if (
-      saveValues.title.trim().length < 3 ||
-      saveValues.summary.trim().length < 3
-    ) {
-      setSaveFormError("Title and summary must be at least 3 characters.");
-      return;
-    }
-
     const approvedSuggestionWithoutExcerpt = suggestions.some((suggestion) => {
       const state = reviewState[suggestion.id];
       return state?.decision === "approved" && !state.finalExcerpt.trim();
@@ -124,7 +111,11 @@ export function DocumentationReviewWorkspace() {
       return;
     }
 
-    const payload = buildSavePayload(review, reviewState, saveValues);
+    const payload = buildSavePayload(
+      review,
+      reviewState,
+      createSaveDefaults(review),
+    );
     saveMutation.mutate(payload);
   }
 
@@ -241,64 +232,26 @@ export function DocumentationReviewWorkspace() {
             ))}
 
             {suggestions.length > 0 ? (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-base">
-                    <Save className="h-4 w-4" />
-                    Save review
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <form
-                    className="grid gap-4 md:grid-cols-[220px_minmax(0,1fr)_auto]"
-                    onSubmit={(event) => {
-                      event.preventDefault();
-                      handleSaveReviewedUpdate();
-                    }}
-                  >
-                    <div className="space-y-2">
-                      <Label htmlFor="save-title">Title</Label>
-                      <Input
-                        id="save-title"
-                        value={saveValues.title}
-                        onChange={(event) => {
-                          setSaveFormError(null);
-                          setSaveValues((current) => ({
-                            ...current,
-                            title: event.target.value,
-                          }));
-                        }}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="save-summary">Summary</Label>
-                      <Input
-                        id="save-summary"
-                        value={saveValues.summary}
-                        onChange={(event) => {
-                          setSaveFormError(null);
-                          setSaveValues((current) => ({
-                            ...current,
-                            summary: event.target.value,
-                          }));
-                        }}
-                      />
-                    </div>
-                    <Button
-                      className="self-end"
-                      type="submit"
-                      disabled={!canSave}
-                    >
-                      {saveMutation.isPending ? (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      ) : (
-                        <Save className="mr-2 h-4 w-4" />
-                      )}
-                      {saveMutation.isPending ? "Saving" : "Save review"}
-                    </Button>
-                  </form>
-                </CardContent>
-              </Card>
+              <form
+                className="flex justify-end"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  handleSaveReviewedUpdate();
+                }}
+              >
+                <Button
+                  className="w-full sm:w-auto"
+                  type="submit"
+                  disabled={!canSave}
+                >
+                  {saveMutation.isPending ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Save className="mr-2 h-4 w-4" />
+                  )}
+                  {saveMutation.isPending ? "Saving" : "Save review"}
+                </Button>
+              </form>
             ) : null}
           </section>
 

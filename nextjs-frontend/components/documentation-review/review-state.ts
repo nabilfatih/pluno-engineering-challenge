@@ -10,6 +10,7 @@ export type SuggestionReviewState = {
   reviewerNote: string;
 };
 
+/** Creates editable reviewer state from grounded backend suggestions. */
 export function createReviewState(
   suggestions: Array<EditSuggestion>,
 ): Record<string, SuggestionReviewState> {
@@ -25,6 +26,7 @@ export function createReviewState(
   );
 }
 
+/** Derives compact save metadata without adding extra reviewer inputs. */
 export function createSaveDefaults(review: DocumentationReviewResponse) {
   const firstSuggestion = review.suggestions?.[0];
 
@@ -41,6 +43,7 @@ export function createSaveDefaults(review: DocumentationReviewResponse) {
   };
 }
 
+/** Converts the current review decisions into the save API contract. */
 export function buildSavePayload(
   review: DocumentationReviewResponse,
   reviewState: Record<string, SuggestionReviewState>,

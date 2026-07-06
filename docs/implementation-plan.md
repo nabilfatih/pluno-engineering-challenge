@@ -77,7 +77,7 @@ The review workspace should be a client component. Use TanStack Query for server
 - save reviewed updates
 - refresh the Saved Updates summary list
 
-Use TanStack Form for the Documentation Update Request form. Keep Review Decisions, final replacement excerpts, and save-review title/summary in local review state so approve/reject interactions cannot reset the final saved payload. Read-only evidence and rationale stay outside editable form state.
+Use TanStack Form for the Documentation Update Request form. Keep Review Decisions and final replacement excerpts in local review state so approve/reject interactions cannot reset the final saved payload. Derive Saved Update title/summary metadata from the generated review instead of asking reviewers to type bookkeeping fields. Read-only evidence and rationale stay outside editable form state.
 
 Do not refactor existing template auth/item forms from React Hook Form to TanStack Form unless they block the challenge workflow. New documentation review UI should use TanStack Form; existing template surfaces can remain unchanged.
 

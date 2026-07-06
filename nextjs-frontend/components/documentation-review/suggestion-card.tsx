@@ -28,7 +28,7 @@ export function SuggestionCard({
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <CardTitle className="text-base">{suggestion.source_title}</CardTitle>
           <div className="flex flex-wrap gap-2">
-            <Badge variant={approved ? "default" : "secondary"}>
+            <Badge variant={approved ? "default" : "destructive"}>
               {approved ? "Approved" : "Rejected"}
             </Badge>
             <Badge variant="outline">
