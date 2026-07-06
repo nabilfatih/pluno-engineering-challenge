@@ -180,7 +180,7 @@ export function DocumentationReviewWorkspace() {
                       <Textarea
                         aria-label="Documentation update request"
                         className="min-h-32 resize-y"
-                        placeholder="Describe the documentation change"
+                        placeholder="Example: We do not support agents as_tool anymore; update the Agents SDK docs so other agents are invoked through handoffs instead."
                         value={field.state.value}
                         onBlur={field.handleBlur}
                         onChange={(event) =>
