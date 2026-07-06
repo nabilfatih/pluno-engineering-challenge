@@ -20,7 +20,6 @@ import {
 import {
   buildSavePayload,
   createReviewState,
-  createSaveDefaults,
   type SuggestionReviewState,
 } from "@/components/documentation-review/review-state";
 import {
@@ -29,9 +28,6 @@ import {
   requestDocumentationSuggestions,
   saveReviewedDocumentationUpdate,
 } from "@/lib/review-client";
-
-const exampleRequest =
-  "We don't support agents as_tool anymore, other agents should only be invoked via handoff.";
 
 export function DocumentationReviewWorkspace() {
   const queryClient = useQueryClient();
@@ -44,7 +40,10 @@ export function DocumentationReviewWorkspace() {
   const [selectedSavedUpdateId, setSelectedSavedUpdateId] = useState<
     string | null
   >(null);
-  const [saveFormError, setSaveFormError] = useState<string | null>(null);
+  const [formError, setFormError] = useState<{
+    title: string;
+    message: string;
+  } | null>(null);
 
   const savedUpdatesQuery = useQuery({
     queryKey: ["saved-documentation-updates"],
@@ -64,7 +63,7 @@ export function DocumentationReviewWorkspace() {
       setReview(result);
       setReviewState(createReviewState(suggestions));
       setSelectedSavedUpdateId(null);
-      setSaveFormError(null);
+      setFormError(null);
     },
   });
 
@@ -81,16 +80,19 @@ export function DocumentationReviewWorkspace() {
       setReview(null);
       setReviewState({});
       setSelectedSavedUpdateId(savedUpdate.id);
-      setSaveFormError(null);
+      setFormError(null);
     },
   });
 
   const requestForm = useForm({
-    defaultValues: { request: exampleRequest },
+    defaultValues: { request: "" },
     onSubmit: async ({ value }) => {
       const request = value.request.trim();
       if (request.length < 8) {
-        setSaveFormError("Request must be at least 8 characters.");
+        setFormError({
+          title: "Request not generated",
+          message: "Request must be at least 8 characters.",
+        });
         return;
       }
       suggestionsMutation.reset();
@@ -98,7 +100,7 @@ export function DocumentationReviewWorkspace() {
       setReview(null);
       setReviewState({});
       setSelectedSavedUpdateId(null);
-      setSaveFormError(null);
+      setFormError(null);
       suggestionsMutation.mutate(request);
     },
   });
@@ -120,7 +122,7 @@ export function DocumentationReviewWorkspace() {
     }
 
     saveMutation.reset();
-    setSaveFormError(null);
+    setFormError(null);
 
     const approvedSuggestionWithoutExcerpt = suggestions.some((suggestion) => {
       const state = reviewState[suggestion.id];
@@ -128,15 +130,14 @@ export function DocumentationReviewWorkspace() {
     });
 
     if (approvedSuggestionWithoutExcerpt) {
-      setSaveFormError("Approved suggestions need replacement text.");
+      setFormError({
+        title: "Review not saved",
+        message: "Approved suggestions need replacement text.",
+      });
       return;
     }
 
-    const payload = buildSavePayload(
-      review,
-      reviewState,
-      createSaveDefaults(review),
-    );
+    const payload = buildSavePayload(review, reviewState);
     saveMutation.mutate(payload);
   }
 
@@ -179,6 +180,7 @@ export function DocumentationReviewWorkspace() {
                       <Textarea
                         aria-label="Documentation update request"
                         className="min-h-32 resize-y"
+                        placeholder="Describe the documentation change"
                         value={field.state.value}
                         onBlur={field.handleBlur}
                         onChange={(event) =>
@@ -213,10 +215,10 @@ export function DocumentationReviewWorkspace() {
               </Alert>
             ) : null}
 
-            {saveFormError ? (
+            {formError ? (
               <Alert variant="destructive">
-                <AlertTitle>Review not saved</AlertTitle>
-                <AlertDescription>{saveFormError}</AlertDescription>
+                <AlertTitle>{formError.title}</AlertTitle>
+                <AlertDescription>{formError.message}</AlertDescription>
               </Alert>
             ) : null}
 
@@ -240,6 +242,22 @@ export function DocumentationReviewWorkspace() {
                       {review.no_suggestions.review_narrative}
                     </AlertDescription>
                   </Alert>
+                ) : null}
+
+                {suggestions.length > 0 ? (
+                  <Card>
+                    <CardHeader className="space-y-3">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                        <CardTitle className="text-base">
+                          {review?.title}
+                        </CardTitle>
+                        <Badge variant="outline">
+                          {suggestions.length}{" "}
+                          {suggestions.length === 1 ? "edit" : "edits"}
+                        </Badge>
+                      </div>
+                    </CardHeader>
+                  </Card>
                 ) : null}
 
                 {suggestions.map((suggestion, index) => (
@@ -290,7 +308,7 @@ export function DocumentationReviewWorkspace() {
             updates={savedUpdatesQuery.data ?? []}
             onSelect={(savedUpdateId) => {
               setSelectedSavedUpdateId(savedUpdateId);
-              setSaveFormError(null);
+              setFormError(null);
             }}
           />
         </div>

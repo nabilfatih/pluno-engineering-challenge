@@ -47,6 +47,7 @@ class NoSuggestionsResult(BaseModel):
 class GeneratedDocumentationReview(BaseModel):
     """Structured output expected from the Agents SDK reviewer."""
 
+    title: str = Field(min_length=3, max_length=80)
     suggestions: list[EditSuggestion] = Field(default_factory=list, max_length=3)
     no_suggestions: NoSuggestionsResult | None = None
 
@@ -69,7 +70,6 @@ class ReviewedSuggestion(BaseModel):
     suggestion: EditSuggestion
     decision: ReviewDecision
     final_excerpt: str | None = Field(default=None, max_length=4000)
-    reviewer_note: str | None = Field(default=None, max_length=1200)
 
     @model_validator(mode="after")
     def validate_final_excerpt_for_decision(self) -> Self:
@@ -92,7 +92,6 @@ class SaveReviewedUpdateRequest(BaseModel):
 
     request: str = Field(min_length=8, max_length=4000)
     title: str = Field(min_length=3, max_length=160)
-    summary: str = Field(min_length=3, max_length=600)
     reviewed_suggestions: list[ReviewedSuggestion] = Field(
         default_factory=list,
         max_length=3,
@@ -104,7 +103,6 @@ class SavedUpdateSummary(BaseModel):
 
     id: UUID
     title: str
-    summary: str
     approved_count: int
     rejected_count: int
     created_at: datetime

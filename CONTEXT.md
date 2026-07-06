@@ -24,6 +24,10 @@ _Avoid_: AI response, patch, recommendation
 A plain-language explanation that helps the user understand an Edit Suggestion or a group of Edit Suggestions. It is not the source of truth for the saved documentation change.
 _Avoid_: Free-form output, chat answer
 
+**Review Title**:
+A concise label for one documentation review session, generated from the Documentation Update Request. It names the overall user intent, not an individual Target Documentation Source.
+_Avoid_: Source title, page title, first suggestion title
+
 **No-Suggestions Result**:
 A review outcome that explains why the app could not produce grounded, apply-ready Edit Suggestions for a Documentation Update Request.
 _Avoid_: Empty result, all good

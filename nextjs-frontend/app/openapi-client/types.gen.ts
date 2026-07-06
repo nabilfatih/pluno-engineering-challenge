@@ -81,6 +81,10 @@ export type DocumentationReviewRequest = {
  */
 export type DocumentationReviewResponse = {
   /**
+   * Title
+   */
+  title: string;
+  /**
    * Suggestions
    */
   suggestions?: Array<EditSuggestion>;
@@ -268,10 +272,6 @@ export type ReviewedSuggestion = {
    * Final Excerpt
    */
   final_excerpt?: string | null;
-  /**
-   * Reviewer Note
-   */
-  reviewer_note?: string | null;
 };
 
 /**
@@ -288,10 +288,6 @@ export type SaveReviewedUpdateRequest = {
    * Title
    */
   title: string;
-  /**
-   * Summary
-   */
-  summary: string;
   /**
    * Reviewed Suggestions
    */
@@ -312,10 +308,6 @@ export type SavedUpdateRead = {
    * Title
    */
   title: string;
-  /**
-   * Summary
-   */
-  summary: string;
   /**
    * Approved Count
    */
@@ -352,10 +344,6 @@ export type SavedUpdateSummary = {
    * Title
    */
   title: string;
-  /**
-   * Summary
-   */
-  summary: string;
   /**
    * Approved Count
    */

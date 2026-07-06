@@ -67,14 +67,9 @@ export function SavedUpdatesPanel({
               onClick={() => onSelect(update.id)}
             >
               <div className="min-w-0 space-y-2">
-                <div className="space-y-1">
-                  <h2 className="line-clamp-2 text-sm font-medium">
-                    {update.title}
-                  </h2>
-                  <p className="line-clamp-3 text-sm font-normal text-muted-foreground">
-                    {update.summary}
-                  </p>
-                </div>
+                <h2 className="line-clamp-2 text-sm font-medium">
+                  {update.title}
+                </h2>
                 <div className="flex flex-wrap items-center gap-2 text-xs font-normal text-muted-foreground">
                   <SavedUpdateBadges update={update} />
                   <span>

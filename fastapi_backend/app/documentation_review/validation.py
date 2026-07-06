@@ -25,7 +25,11 @@ def grounded_review_response(
     ]
 
     if grounded:
-        return DocumentationReviewResponse(request=request, suggestions=grounded)
+        return DocumentationReviewResponse(
+            request=request,
+            title=generated.title,
+            suggestions=grounded,
+        )
 
     no_suggestions = generated.no_suggestions
     if no_suggestions is None:
@@ -40,6 +44,7 @@ def grounded_review_response(
 
     return DocumentationReviewResponse(
         request=request,
+        title=generated.title,
         suggestions=[],
         no_suggestions=no_suggestions,
     )

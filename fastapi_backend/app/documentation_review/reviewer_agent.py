@@ -75,6 +75,11 @@ Return at most three Edit Suggestions. Each suggestion must:
 - cite evidence from the documentation context;
 - explain the rationale and review_narrative in plain language.
 
+Always return one title for the overall review:
+- base it on the Documentation Update Request;
+- keep it under 80 characters;
+- do not copy a source_title or page title as the review title.
+
 Call search_documentation when the initial context is not enough.
 
 If the request is vague, unsupported, already reflected, or cannot be tied to an exact
@@ -86,6 +91,7 @@ def no_api_key_review() -> GeneratedDocumentationReview:
     """Return a deterministic no-suggestions result when local API access is absent."""
 
     return GeneratedDocumentationReview(
+        title="Configure OpenAI API key",
         suggestions=[],
         no_suggestions=NoSuggestionsResult(
             reason="OPENAI_API_KEY is not configured for this environment.",

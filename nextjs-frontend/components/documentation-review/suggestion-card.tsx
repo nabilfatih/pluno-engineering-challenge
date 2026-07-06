@@ -32,9 +32,7 @@ export function SuggestionCard({
       <CardHeader className="space-y-3">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0 space-y-1">
-            <CardTitle className="text-base">
-              {suggestion.source_title}
-            </CardTitle>
+            <CardTitle className="text-base">Edit {position}</CardTitle>
             <p className="text-xs text-muted-foreground">
               {suggestion.source_path}
             </p>

@@ -26,7 +26,10 @@ class FakeReviewer:
         request: str,
         sources: Sequence[DocumentationSource],
     ) -> GeneratedDocumentationReview:
-        return GeneratedDocumentationReview(suggestions=[_suggestion()])
+        return GeneratedDocumentationReview(
+            title="Clarify Runner output",
+            suggestions=[_suggestion()],
+        )
 
 
 @pytest.fixture
@@ -57,6 +60,7 @@ async def test_review_and_save_workflow(
     )
 
     assert suggest_response.status_code == status.HTTP_200_OK
+    assert suggest_response.json()["title"] == "Clarify Runner output"
     suggestion_payload = suggest_response.json()["suggestions"][0]
     assert suggestion_payload["source_path"] == "agents-quickstart.md"
 
@@ -65,7 +69,6 @@ async def test_review_and_save_workflow(
         json={
             "request": "Clarify that Runner.run returns final_output.",
             "title": "Clarify Runner output",
-            "summary": "Adds the Python result field to the quickstart copy.",
             "reviewed_suggestions": [
                 {
                     "suggestion": suggestion_payload,
@@ -128,7 +131,6 @@ async def test_save_rejects_rejected_suggestion_with_final_excerpt() -> None:
             json={
                 "request": "Clarify that Runner.run returns final_output.",
                 "title": "Clarify Runner output",
-                "summary": "Rejected suggestions should not persist replacements.",
                 "reviewed_suggestions": [
                     {
                         "suggestion": _suggestion().model_dump(mode="json"),

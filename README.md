@@ -61,7 +61,8 @@ Frontend ownership stays focused:
 - TanStack Query owns server state and mutations.
 - TanStack Form owns the request input; local review state owns decisions and
   replacement text so approve/reject interactions cannot reset the final saved
-  payload. Save title/summary metadata is derived from the generated review.
+  payload. The reviewer returns one generated review title for the whole
+  session; saved rows use only that title as their visible label.
 - The saved panel lists compact history rows and loads the full persisted review
   when a row is selected.
 - shadcn/ui primitives provide the design system.

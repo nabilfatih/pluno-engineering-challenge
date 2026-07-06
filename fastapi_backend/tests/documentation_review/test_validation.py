@@ -11,6 +11,7 @@ def test_grounded_review_response_keeps_matching_excerpt() -> None:
     """A suggestion is returned when its original excerpt exists in the target."""
 
     generated = GeneratedDocumentationReview(
+        title="Clarify Runner output",
         suggestions=[
             _suggestion(
                 original_excerpt=(
@@ -19,7 +20,7 @@ def test_grounded_review_response_keeps_matching_excerpt() -> None:
                     "output plus the run history."
                 )
             )
-        ]
+        ],
     )
 
     response = grounded_review_response(
@@ -29,6 +30,7 @@ def test_grounded_review_response_keeps_matching_excerpt() -> None:
     )
 
     assert len(response.suggestions) == 1
+    assert response.title == "Clarify Runner output"
     assert response.no_suggestions is None
 
 
@@ -36,7 +38,8 @@ def test_grounded_review_response_rejects_non_matching_excerpt() -> None:
     """A suggestion is hidden when the model invents the original excerpt."""
 
     generated = GeneratedDocumentationReview(
-        suggestions=[_suggestion(original_excerpt="This text is not in the docs.")]
+        title="Clarify Runner output",
+        suggestions=[_suggestion(original_excerpt="This text is not in the docs.")],
     )
 
     response = grounded_review_response(

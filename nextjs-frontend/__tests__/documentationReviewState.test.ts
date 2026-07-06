@@ -5,7 +5,6 @@ import type {
 import {
   buildSavePayload,
   createReviewState,
-  createSaveDefaults,
 } from "@/components/documentation-review/review-state";
 
 const suggestion: EditSuggestion = {
@@ -29,6 +28,7 @@ const suggestion: EditSuggestion = {
 
 const review: DocumentationReviewResponse = {
   request: "Clarify where Runner.run exposes the final text.",
+  title: "Clarify Runner final output",
   suggestions: [suggestion],
   no_suggestions: null,
 };
@@ -39,69 +39,42 @@ describe("documentation review state", () => {
       "suggestion-1": {
         decision: "approved",
         finalExcerpt: "Read generated text from result.final_output.",
-        reviewerNote: "",
       },
     });
   });
 
-  it("derives useful save defaults from the first grounded suggestion", () => {
-    expect(createSaveDefaults(review)).toEqual({
-      title: "Agents SDK results",
-      summary: "The request asks for a clearer result access note.",
+  it("builds a save payload from the generated review title", () => {
+    const payload = buildSavePayload(review, {
+      "suggestion-1": {
+        decision: "approved",
+        finalExcerpt: "  Read generated text from result.final_output.  ",
+      },
     });
-  });
-
-  it("builds a trimmed save payload with reviewer edits", () => {
-    const payload = buildSavePayload(
-      review,
-      {
-        "suggestion-1": {
-          decision: "approved",
-          finalExcerpt: "  Read generated text from result.final_output.  ",
-          reviewerNote: "  Looks good.  ",
-        },
-      },
-      {
-        title: "  Result output docs  ",
-        summary: "  Tighten result access wording.  ",
-      },
-    );
 
     expect(payload).toEqual({
       request: review.request,
-      title: "Result output docs",
-      summary: "Tighten result access wording.",
+      title: "Clarify Runner final output",
       reviewed_suggestions: [
         {
           suggestion,
           decision: "approved",
           final_excerpt: "Read generated text from result.final_output.",
-          reviewer_note: "Looks good.",
         },
       ],
     });
   });
 
   it("does not persist final excerpts for rejected suggestions", () => {
-    const payload = buildSavePayload(
-      review,
-      {
-        "suggestion-1": {
-          decision: "rejected",
-          finalExcerpt: "Do not use this.",
-          reviewerNote: "",
-        },
+    const payload = buildSavePayload(review, {
+      "suggestion-1": {
+        decision: "rejected",
+        finalExcerpt: "Do not use this.",
       },
-      {
-        title: "Result output docs",
-        summary: "Rejected suggestion.",
-      },
-    );
+    });
 
     expect(payload.reviewed_suggestions?.[0]).toMatchObject({
       decision: "rejected",
       final_excerpt: null,
-      reviewer_note: null,
     });
   });
 });

@@ -1086,6 +1086,12 @@
       },
       "DocumentationReviewResponse": {
         "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 80,
+            "minLength": 3,
+            "title": "Title"
+          },
           "suggestions": {
             "items": {
               "$ref": "#/components/schemas/EditSuggestion"
@@ -1111,6 +1117,7 @@
         },
         "type": "object",
         "required": [
+          "title",
           "request"
         ],
         "title": "DocumentationReviewResponse",
@@ -1430,18 +1437,6 @@
               }
             ],
             "title": "Final Excerpt"
-          },
-          "reviewer_note": {
-            "anyOf": [
-              {
-                "type": "string",
-                "maxLength": 1200
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Reviewer Note"
           }
         },
         "type": "object",
@@ -1466,12 +1461,6 @@
             "minLength": 3,
             "title": "Title"
           },
-          "summary": {
-            "type": "string",
-            "maxLength": 600,
-            "minLength": 3,
-            "title": "Summary"
-          },
           "reviewed_suggestions": {
             "items": {
               "$ref": "#/components/schemas/ReviewedSuggestion"
@@ -1484,8 +1473,7 @@
         "type": "object",
         "required": [
           "request",
-          "title",
-          "summary"
+          "title"
         ],
         "title": "SaveReviewedUpdateRequest",
         "description": "Request body for persisting reviewed documentation changes."
@@ -1500,10 +1488,6 @@
           "title": {
             "type": "string",
             "title": "Title"
-          },
-          "summary": {
-            "type": "string",
-            "title": "Summary"
           },
           "approved_count": {
             "type": "integer",
@@ -1534,7 +1518,6 @@
         "required": [
           "id",
           "title",
-          "summary",
           "approved_count",
           "rejected_count",
           "created_at",
@@ -1555,10 +1538,6 @@
             "type": "string",
             "title": "Title"
           },
-          "summary": {
-            "type": "string",
-            "title": "Summary"
-          },
           "approved_count": {
             "type": "integer",
             "title": "Approved Count"
@@ -1577,7 +1556,6 @@
         "required": [
           "id",
           "title",
-          "summary",
           "approved_count",
           "rejected_count",
           "created_at"

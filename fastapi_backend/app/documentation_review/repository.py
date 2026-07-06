@@ -35,7 +35,6 @@ async def save_reviewed_update(
 
     saved = SavedUpdate(
         title=payload.title,
-        summary=payload.summary,
         request_text=payload.request,
         reviewed_suggestions=[
             item.model_dump(mode="json") for item in payload.reviewed_suggestions
@@ -83,7 +82,6 @@ def saved_update_read(saved: SavedUpdate) -> SavedUpdateRead:
     return SavedUpdateRead(
         id=cast(UUID, saved.id),
         title=cast(str, saved.title),
-        summary=cast(str, saved.summary),
         request=cast(str, saved.request_text),
         reviewed_suggestions=reviewed_suggestions,
         approved_count=cast(int, saved.approved_count),

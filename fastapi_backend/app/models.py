@@ -31,7 +31,6 @@ class SavedUpdate(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     title = Column(String(160), nullable=False)
-    summary = Column(String(600), nullable=False)
     request_text = Column(Text, nullable=False)
     reviewed_suggestions = Column(JSON, nullable=False)
     approved_count = Column(Integer, nullable=False, default=0)

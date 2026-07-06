@@ -7,7 +7,6 @@ import type {
 export type SuggestionReviewState = {
   decision: "approved" | "rejected";
   finalExcerpt: string;
-  reviewerNote: string;
 };
 
 /** Creates editable reviewer state from grounded backend suggestions. */
@@ -20,39 +19,19 @@ export function createReviewState(
       {
         decision: "approved" as const,
         finalExcerpt: suggestion.suggested_excerpt,
-        reviewerNote: "",
       },
     ]),
   );
-}
-
-/** Derives compact save metadata without adding extra reviewer inputs. */
-export function createSaveDefaults(review: DocumentationReviewResponse) {
-  const firstSuggestion = review.suggestions?.[0];
-
-  if (!firstSuggestion) {
-    return {
-      title: "No suggestions",
-      summary: review.no_suggestions?.reason ?? "No grounded suggestions.",
-    };
-  }
-
-  return {
-    title: firstSuggestion.source_title,
-    summary: firstSuggestion.rationale,
-  };
 }
 
 /** Converts the current review decisions into the save API contract. */
 export function buildSavePayload(
   review: DocumentationReviewResponse,
   reviewState: Record<string, SuggestionReviewState>,
-  values: { title: string; summary: string },
 ): SaveReviewedUpdateRequest {
   return {
     request: review.request,
-    title: values.title.trim(),
-    summary: values.summary.trim(),
+    title: review.title,
     reviewed_suggestions: (review.suggestions ?? []).map((suggestion) => {
       const state = reviewState[suggestion.id];
       const decision = state?.decision ?? "rejected";
@@ -62,7 +41,6 @@ export function buildSavePayload(
         decision,
         final_excerpt:
           decision === "approved" ? state?.finalExcerpt.trim() : null,
-        reviewer_note: state?.reviewerNote.trim() || null,
       };
     }),
   };
