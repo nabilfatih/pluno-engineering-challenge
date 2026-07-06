@@ -186,20 +186,24 @@ tests plus a frontend review-state payload test.
 
 Implemented for the take-home:
 
-- committed curated corpus instead of live crawling on every request
-- ranked full-text retrieval instead of a vector database
-- synchronous suggestion generation
-- one focused reviewer agent
-- JSON persistence for reviewed suggestions
-- unauthenticated challenge workspace
+- committed curated corpus instead of live crawling on every request, so demos
+  and tests are deterministic
+- ranked in-process full-text retrieval instead of a vector database, so the AI
+  path stays inspectable and fast to operate locally
+- synchronous suggestion generation instead of background jobs, because the
+  current corpus is small enough for a direct request/response flow
+- one focused reviewer agent instead of multi-agent orchestration, because the
+  main risk is grounded, reviewable suggestions rather than delegation
+- JSON persistence for reviewed suggestions instead of normalized per-suggestion
+  tables, because the take-home needs save/load review sessions rather than
+  analytics or assignment workflows
+- unauthenticated challenge workspace, so reviewers can open the app and test
+  the core AI workflow immediately
 
-Why these tradeoffs:
-
-- They keep the demo deterministic and easy to review.
-- They put effort into the AI quality path: retrieval, structured output,
-  grounding, and reviewability.
-- They avoid infrastructure that would not improve the take-home result within
-  the available time.
+These choices put most effort into the challenge's AI-quality path: retrieval,
+structured output, grounding checks, review UX, and saved before/after edits.
+They intentionally avoid infrastructure that would not improve the take-home
+result within the available time.
 
 ## Production Changes
 
@@ -217,6 +221,27 @@ For production I would add:
 - normalized suggestion tables if analytics, assignment, or audit workflows grow
 - export/apply flows that open documentation PRs after human approval
 - optional verifier/export agents once deterministic checks are already strong
+
+## Alternatives Considered
+
+- **Agents SDK vs direct Responses API:** I used the Python OpenAI Agents SDK
+  because the challenge domain is Agents SDK documentation and the app benefits
+  from explicit tools, structured output, and future handoffs. A direct Responses
+  API call would be simpler but less representative of the target domain.
+- **Full-text vs vector search:** full-text was enough for the small curated
+  corpus and keeps retrieval decisions explainable. Production should use hybrid
+  retrieval once the corpus grows or semantic matches matter more than exact
+  terminology.
+- **One agent vs multi-agent orchestration:** one reviewer agent keeps latency,
+  prompts, and debugging simple. Production can add verifier, planning, or export
+  agents after evals prove the single-agent baseline.
+- **Excerpt replacement vs patch generation:** the app stores full original and
+  replacement excerpts. Patch syntax would be useful for automated application,
+  but it is brittle until source versioning, conflict handling, and PR export are
+  in place.
+- **Direct browser-to-FastAPI calls vs Next.js server actions:** direct calls keep
+  the challenge workflow simple. Production can move through server routes or
+  server actions for cookie auth, request signing, and server-only aggregation.
 
 ## Template Attribution
 
