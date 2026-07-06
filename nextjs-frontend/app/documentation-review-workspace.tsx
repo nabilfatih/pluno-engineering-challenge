@@ -3,7 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "@tanstack/react-form";
 import { FileText, Loader2, Save, Send } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import type { DocumentationReviewResponse } from "@/app/openapi-client";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -31,7 +31,7 @@ import {
 } from "@/lib/documentationReviewClient";
 
 const exampleRequest =
-  "The Agents SDK docs should make it clearer that Python users read the final answer from result.final_output after Runner.run.";
+  "We don't support agents as_tool anymore, other agents should only be invoked via handoff.";
 
 export function DocumentationReviewWorkspace() {
   const queryClient = useQueryClient();
@@ -41,6 +41,9 @@ export function DocumentationReviewWorkspace() {
   const [reviewState, setReviewState] = useState<
     Record<string, SuggestionReviewState>
   >({});
+  const [saveValues, setSaveValues] = useState({ title: "", summary: "" });
+  const [saveFormError, setSaveFormError] = useState<string | null>(null);
+  const [saveSuccess, setSaveSuccess] = useState<string | null>(null);
 
   const savedUpdatesQuery = useQuery({
     queryKey: ["saved-documentation-updates"],
@@ -53,7 +56,9 @@ export function DocumentationReviewWorkspace() {
       const suggestions = result.suggestions ?? [];
       setReview(result);
       setReviewState(createReviewState(suggestions));
-      saveForm.reset(createSaveDefaults(result));
+      setSaveValues(createSaveDefaults(result));
+      setSaveFormError(null);
+      setSaveSuccess(null);
     },
   });
 
@@ -63,6 +68,8 @@ export function DocumentationReviewWorkspace() {
       await queryClient.invalidateQueries({
         queryKey: ["saved-documentation-updates"],
       });
+      setSaveFormError(null);
+      setSaveSuccess("Reviewed update saved.");
     },
   });
 
@@ -71,21 +78,18 @@ export function DocumentationReviewWorkspace() {
     onSubmit: async ({ value }) => {
       const request = value.request.trim();
       if (request.length < 8) {
+        setSaveSuccess(null);
+        setSaveFormError("Request must be at least 8 characters.");
         return;
       }
+      suggestionsMutation.reset();
+      saveMutation.reset();
+      setReview(null);
+      setReviewState({});
+      setSaveValues({ title: "", summary: "" });
+      setSaveSuccess(null);
+      setSaveFormError(null);
       suggestionsMutation.mutate(request);
-    },
-  });
-
-  const saveForm = useForm({
-    defaultValues: { title: "", summary: "" },
-    onSubmit: async ({ value }) => {
-      if (!review) {
-        return;
-      }
-
-      const payload = buildSavePayload(review, reviewState, value);
-      saveMutation.mutate(payload);
     },
   });
 
@@ -93,13 +97,36 @@ export function DocumentationReviewWorkspace() {
   const activeError = suggestionsMutation.error ?? saveMutation.error;
   const canSave = suggestions.length > 0 && !saveMutation.isPending;
 
-  useEffect(() => {
+  function handleSaveReviewedUpdate() {
     if (!review) {
       return;
     }
 
-    saveForm.reset(createSaveDefaults(review));
-  }, [review, saveForm]);
+    saveMutation.reset();
+    setSaveSuccess(null);
+    setSaveFormError(null);
+
+    if (
+      saveValues.title.trim().length < 3 ||
+      saveValues.summary.trim().length < 3
+    ) {
+      setSaveFormError("Title and summary must be at least 3 characters.");
+      return;
+    }
+
+    const approvedSuggestionWithoutExcerpt = suggestions.some((suggestion) => {
+      const state = reviewState[suggestion.id];
+      return state?.decision === "approved" && !state.finalExcerpt.trim();
+    });
+
+    if (approvedSuggestionWithoutExcerpt) {
+      setSaveFormError("Approved suggestions need replacement text.");
+      return;
+    }
+
+    const payload = buildSavePayload(review, reviewState, saveValues);
+    saveMutation.mutate(payload);
+  }
 
   return (
     <main className="dark min-h-screen bg-background text-foreground">
@@ -157,7 +184,7 @@ export function DocumentationReviewWorkspace() {
                     ) : (
                       <Send className="mr-2 h-4 w-4" />
                     )}
-                    Generate
+                    {suggestionsMutation.isPending ? "Generating" : "Generate"}
                   </Button>
                 </form>
               </CardContent>
@@ -171,6 +198,20 @@ export function DocumentationReviewWorkspace() {
                     ? activeError.message
                     : "The request could not be completed."}
                 </AlertDescription>
+              </Alert>
+            ) : null}
+
+            {saveFormError ? (
+              <Alert variant="destructive">
+                <AlertTitle>Review not saved</AlertTitle>
+                <AlertDescription>{saveFormError}</AlertDescription>
+              </Alert>
+            ) : null}
+
+            {saveSuccess ? (
+              <Alert>
+                <AlertTitle>Saved</AlertTitle>
+                <AlertDescription>{saveSuccess}</AlertDescription>
               </Alert>
             ) : null}
 
@@ -204,7 +245,7 @@ export function DocumentationReviewWorkspace() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-base">
                     <Save className="h-4 w-4" />
-                    Save
+                    Save review
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -212,39 +253,37 @@ export function DocumentationReviewWorkspace() {
                     className="grid gap-4 md:grid-cols-[220px_minmax(0,1fr)_auto]"
                     onSubmit={(event) => {
                       event.preventDefault();
-                      void saveForm.handleSubmit();
+                      handleSaveReviewedUpdate();
                     }}
                   >
-                    <saveForm.Field name="title">
-                      {(field) => (
-                        <div className="space-y-2">
-                          <Label htmlFor={field.name}>Title</Label>
-                          <Input
-                            id={field.name}
-                            value={field.state.value}
-                            onBlur={field.handleBlur}
-                            onChange={(event) =>
-                              field.handleChange(event.target.value)
-                            }
-                          />
-                        </div>
-                      )}
-                    </saveForm.Field>
-                    <saveForm.Field name="summary">
-                      {(field) => (
-                        <div className="space-y-2">
-                          <Label htmlFor={field.name}>Summary</Label>
-                          <Input
-                            id={field.name}
-                            value={field.state.value}
-                            onBlur={field.handleBlur}
-                            onChange={(event) =>
-                              field.handleChange(event.target.value)
-                            }
-                          />
-                        </div>
-                      )}
-                    </saveForm.Field>
+                    <div className="space-y-2">
+                      <Label htmlFor="save-title">Title</Label>
+                      <Input
+                        id="save-title"
+                        value={saveValues.title}
+                        onChange={(event) => {
+                          setSaveFormError(null);
+                          setSaveValues((current) => ({
+                            ...current,
+                            title: event.target.value,
+                          }));
+                        }}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="save-summary">Summary</Label>
+                      <Input
+                        id="save-summary"
+                        value={saveValues.summary}
+                        onChange={(event) => {
+                          setSaveFormError(null);
+                          setSaveValues((current) => ({
+                            ...current,
+                            summary: event.target.value,
+                          }));
+                        }}
+                      />
+                    </div>
                     <Button
                       className="self-end"
                       type="submit"
@@ -255,7 +294,7 @@ export function DocumentationReviewWorkspace() {
                       ) : (
                         <Save className="mr-2 h-4 w-4" />
                       )}
-                      Save
+                      {saveMutation.isPending ? "Saving" : "Save review"}
                     </Button>
                   </form>
                 </CardContent>

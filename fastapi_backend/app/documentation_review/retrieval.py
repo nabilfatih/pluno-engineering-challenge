@@ -18,11 +18,25 @@ STOPWORDS = {
 }
 
 ALIASES = {
-    "agent": ["Agent(", "agents-as-tools", "as_tool", "handoff"],
-    "handoff": ["handoffs", "specialist agents", "last_agent"],
+    "agent": ["Agent(", "agents-as-tools", "agent-as-tool", "as_tool", "handoff"],
+    "delegate": ["delegation", "specialist agents", "handoffs", "handoff"],
+    "delegation": ["delegate", "specialist agents", "handoffs", "handoff"],
+    "handoff": ["handoffs", "specialist agents", "last_agent", "delegation"],
+    "invoke": ["invoked", "specialist agents", "handoffs", "handoff"],
     "output": ["output_type", "AgentOutputSchema", "structured outputs"],
     "run": ["Runner.run", "final_output", "run history"],
-    "tool": ["function_tool", "tools", "tool call", "as_tool"],
+    "specialist": ["specialist agents", "handoffs", "handoff", "as_tool"],
+    "tool": ["function_tool", "tools", "tool call", "as_tool", "agent-as-tool"],
+}
+
+CODE_SYMBOLS = {
+    "Agent(",
+    "Runner.run",
+    "as_tool",
+    "final_output",
+    "function_tool",
+    "handoffs",
+    "last_agent",
 }
 
 
@@ -97,6 +111,11 @@ def score_chunk(request: str, chunk: DocumentationChunk) -> int:
         if phrase in haystack:
             score += 8
 
+    for symbol in CODE_SYMBOLS:
+        symbol_text = symbol.lower()
+        if symbol_text in request.lower() and symbol_text in haystack:
+            score += 30
+
     if chunk.source_kind == "target":
         score += 1
 
@@ -114,6 +133,7 @@ def render_chunks(chunks: Sequence[DocumentationChunk]) -> str:
                     f"Source path: {chunk.source_path}",
                     f"Source title: {chunk.source_title}",
                     f"Source URL: {chunk.source_url}",
+                    f"Source kind: {chunk.source_kind}",
                     f"Heading: {chunk.heading}",
                     chunk.text.strip(),
                 ]

@@ -10,11 +10,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 
 export function SuggestionCard({
   suggestion,
@@ -34,7 +29,7 @@ export function SuggestionCard({
           <CardTitle className="text-base">{suggestion.source_title}</CardTitle>
           <div className="flex flex-wrap gap-2">
             <Badge variant={approved ? "default" : "secondary"}>
-              {state.decision}
+              {approved ? "Approved" : "Rejected"}
             </Badge>
             <Badge variant="outline">
               {Math.round(suggestion.confidence * 100)}%
@@ -72,19 +67,23 @@ export function SuggestionCard({
           <p className="text-xs text-muted-foreground">
             {suggestion.source_path}
           </p>
-          <div className="flex gap-2">
-            <DecisionButton
-              label="Approve"
-              active={approved}
-              icon={<Check className="h-4 w-4" />}
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              variant={approved ? "default" : "outline"}
               onClick={() => onChange({ ...state, decision: "approved" })}
-            />
-            <DecisionButton
-              label="Reject"
-              active={!approved}
-              icon={<X className="h-4 w-4" />}
+            >
+              <Check className="mr-2 h-4 w-4" />
+              Approve
+            </Button>
+            <Button
+              type="button"
+              variant={!approved ? "destructive" : "outline"}
               onClick={() => onChange({ ...state, decision: "rejected" })}
-            />
+            >
+              <X className="mr-2 h-4 w-4" />
+              Reject
+            </Button>
           </div>
         </div>
       </CardContent>
@@ -114,34 +113,5 @@ function ExcerptBlock({ label, value }: { label: string; value: string }) {
         {value}
       </pre>
     </div>
-  );
-}
-
-function DecisionButton({
-  label,
-  active,
-  icon,
-  onClick,
-}: {
-  label: string;
-  active: boolean;
-  icon: React.ReactNode;
-  onClick: () => void;
-}) {
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          type="button"
-          variant={active ? "default" : "outline"}
-          size="icon"
-          onClick={onClick}
-          aria-label={label}
-        >
-          {icon}
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent>{label}</TooltipContent>
-    </Tooltip>
   );
 }

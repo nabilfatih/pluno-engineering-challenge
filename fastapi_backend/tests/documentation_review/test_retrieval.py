@@ -11,3 +11,17 @@ def test_retrieve_documentation_matches_agents_as_tools_language() -> None:
     assert chunks
     assert chunks[0].source_path == "tools-agents-sdk.md"
     assert "as_tool" in chunks[0].text
+
+
+def test_retrieve_documentation_matches_handoff_change_request() -> None:
+    """Retrieval should support the challenge's handoff migration scenario."""
+
+    sources = load_documentation_sources()
+    chunks = retrieve_documentation(
+        "Other agents should only be invoked via handoff instead of as_tool",
+        sources,
+    )
+
+    assert chunks
+    assert chunks[0].source_path == "tools-agents-sdk.md"
+    assert any("handoff" in chunk.text.lower() for chunk in chunks[:3])
